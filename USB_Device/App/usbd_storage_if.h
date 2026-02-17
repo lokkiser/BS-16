@@ -31,7 +31,28 @@
 #include "usbd_msc.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include <string.h>
+#include "stm_util.h"
+#include "mki.h"
+#include "mux.h"
+#include "console.h"
+#include "rtc.h"
+#include "timer_util.h"
+#include "local_mic.h"
+#include "local_spk.h"
+#include "ctrl.h"
+#include "akb.h"
+#include "fault.h"
+#include "datetime_util.h"
+#include "fatfs_util.h"
+#include "flash_io.h"
+#include "setting.h"
+#include "logfile_util.h"
+#include "str_util.h"
+#include "mp3play_util.h"
+#include "memplay_util.h"
+#include "dacplay_util.h"
+#include "mp3files.h"
 /* USER CODE END INCLUDE */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY

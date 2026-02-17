@@ -1,0 +1,26 @@
+/*
+ * json_util.h
+ *
+ *  Created on: 22 окт. 2024 г.
+ *      Author: Rafael Boltachev
+ */
+
+#ifndef UTIL_JSON_UTIL_H_
+#define UTIL_JSON_UTIL_H_
+
+
+#include "def_util.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+bool json_find_key_value(char * str, char * key, char * buf, uint16_t buf_len);
+
+char * json_get_value(char * json, char * key, uint16_t * len);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* UTIL_JSON_UTIL_H_ */

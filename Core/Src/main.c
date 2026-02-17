@@ -60,6 +60,8 @@ DMA_HandleTypeDef hdma_dac2_ch1;
 I2C_HandleTypeDef hi2c3;
 I2C_HandleTypeDef hi2c4;
 
+IWDG_HandleTypeDef hiwdg;
+
 RTC_HandleTypeDef hrtc;
 
 SPI_HandleTypeDef hspi1;
@@ -91,6 +93,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_ADC4_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM15_Init(void);
+static void MX_IWDG_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -747,6 +750,35 @@ static void MX_I2C4_Init(void)
 }
 
 /**
+  * @brief IWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_IWDG_Init(void)
+{
+
+  /* USER CODE BEGIN IWDG_Init 0 */
+
+  /* USER CODE END IWDG_Init 0 */
+
+  /* USER CODE BEGIN IWDG_Init 1 */
+
+  /* USER CODE END IWDG_Init 1 */
+  hiwdg.Instance = IWDG;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_32;
+  hiwdg.Init.Window = 1999;
+  hiwdg.Init.Reload = 1999;
+  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN IWDG_Init 2 */
+
+  /* USER CODE END IWDG_Init 2 */
+
+}
+
+/**
   * @brief RTC Initialization Function
   * @param None
   * @retval None
@@ -1031,7 +1063,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(mute_OP_GPIO_Port, mute_OP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, FREE_GPIO_1_Pin|FREE_GPIO_2_Pin|FREE_GPIO_3_Pin|SPI_CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, FREE_GPIO_1_Pin|FREE_GPIO_2_Pin|FREE_GPIO_3_Pin|FLASH_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : MCU_MUX_CTRL_3_Pin MCU_MUX_CTRL_4_Pin MCU_MUX_CTRL_5_Pin Avar_Pin
                            Start_Pin VIZ_Pin MCU_MUX_CTRL_1_Pin MCU_MUX_CTRL_2_Pin */
@@ -1080,8 +1112,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(CLK_IRQ_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : FREE_GPIO_1_Pin FREE_GPIO_2_Pin FREE_GPIO_3_Pin SPI_CS_Pin */
-  GPIO_InitStruct.Pin = FREE_GPIO_1_Pin|FREE_GPIO_2_Pin|FREE_GPIO_3_Pin|SPI_CS_Pin;
+  /*Configure GPIO pins : FREE_GPIO_1_Pin FREE_GPIO_2_Pin FREE_GPIO_3_Pin FLASH_CS_Pin */
+  GPIO_InitStruct.Pin = FREE_GPIO_1_Pin|FREE_GPIO_2_Pin|FREE_GPIO_3_Pin|FLASH_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

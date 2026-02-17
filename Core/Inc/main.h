@@ -32,6 +32,27 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+
+#include "def_util.h"
+
+#define BASE_FREQUENCY 				    144000000
+#define BASE_TIM_FREQUENSY 			  BASE_FREQUENCY
+#define BASE_AUDIO_FREQUENCY 		  16000
+#define HAL_ADC_INJECTED_ENABLED	1
+#define SOUND_DMA_BUFFER_SIZE 		1024
+#define BC16_LOADER_FILE_NAME 		"bc16_loader.bin"
+#define BC16_LOADER_ADDR			   (0x08060000)
+#define BC16_UPGRADE_FILE_NAME	  "bc16.bin"
+#define BC16_CFG_FILE_NAME			  "bc16.cfg"
+#define BC16_FLASH_TYPE				    STM32G4XX_DUAL_BANK_FLASH_TYPE
+#define BC16_PRORGAMM_ADDR			 (0x08010000)
+#define HAL_USE_FLASH				      1
+#define HAL_USE_PAGE_NUMBER_ERASE	1
+#define DACPLAY_DMA_BUF_SIZE		  SOUND_DMA_BUFFER_SIZE
+#define ADCPLAY_DMA_BUF_SIZE		  SOUND_DMA_BUFFER_SIZE
+#define USE_ADCPLAY_WRITE_DATA		1
+
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -107,15 +128,39 @@ void Error_Handler(void);
 #define FREE_GPIO_2_GPIO_Port GPIOD
 #define FREE_GPIO_3_Pin GPIO_PIN_2
 #define FREE_GPIO_3_GPIO_Port GPIOD
-#define SPI_CS_Pin GPIO_PIN_7
-#define SPI_CS_GPIO_Port GPIOD
+#define FLASH_CS_Pin GPIO_PIN_7
+#define FLASH_CS_GPIO_Port GPIOD
 #define MCU_MUX_CTRL_1_Pin GPIO_PIN_0
 #define MCU_MUX_CTRL_1_GPIO_Port GPIOE
 #define MCU_MUX_CTRL_2_Pin GPIO_PIN_1
 #define MCU_MUX_CTRL_2_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
+extern ADC_HandleTypeDef hadc1;
+extern ADC_HandleTypeDef hadc2;
+extern ADC_HandleTypeDef hadc3;
+extern ADC_HandleTypeDef hadc5;
 
+extern DAC_HandleTypeDef hdac1;
+extern DAC_HandleTypeDef hdac2;
+
+extern I2C_HandleTypeDef hi2c3;
+extern I2C_HandleTypeDef hi2c4;
+
+extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart3;
+
+extern IWDG_HandleTypeDef hiwdg;
+
+extern SPI_HandleTypeDef hspi1;
+
+extern TIM_HandleTypeDef htim7;
+extern TIM_HandleTypeDef htim8;
+extern TIM_HandleTypeDef htim15;
+
+extern bool fatfs_mount;
+
+void filelog(char* str);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

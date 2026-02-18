@@ -7,6 +7,7 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 /*
 #ifndef BOOL
 #define BOOL	unsigned char

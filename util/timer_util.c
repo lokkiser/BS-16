@@ -23,12 +23,12 @@ bool timers_delete(on_timer_function_t * on_timer_function)
 	bool res;
 
 	i = 0;
-	res = FALSE;
+	res = false;
 	while (i < timers_count) {
 		if (timers_data[i].on_timer_function == on_timer_function) {
 			timers_data[i] = timers_data[timers_count - 1];
 			timers_count--;
-			res = TRUE;
+			res = true;
 			continue;
 		}
 		i++;
@@ -43,16 +43,16 @@ bool timers_add(on_timer_function_t * on_timer_function, uint32_t interval)
 {
     int i;
 
-    if (!on_timer_function || !interval) return FALSE;
+    if (!on_timer_function || !interval) return false;
 
-	if (timers_count >= MAX_TIMERS) return FALSE;
+	if (timers_count >= MAX_TIMERS) return false;
 
         for (i = 0; i < timers_count; ++i) {
           if (timers_data[i].on_timer_function == on_timer_function) {
              timers_data[i].interval = interval;
              timers_data[i].tick = timers_get_tick();
              timers_data[i].tick += interval;
-             return TRUE;
+             return true;
           }
         }
 
@@ -61,7 +61,7 @@ bool timers_add(on_timer_function_t * on_timer_function, uint32_t interval)
 	timers_data[timers_count].tick = timers_get_tick();
 	timers_data[timers_count].tick += interval;
 	timers_count++;
-	return TRUE;
+	return true;
 }
 
 
@@ -95,15 +95,15 @@ bool timers_add(on_timer_function_t * on_timer_function, uint32_t interval)
 {
     int i;
 
-    if (!on_timer_function || !interval) return FALSE;
+    if (!on_timer_function || !interval) return false;
 
-	if (timers_count >= MAX_TIMERS) return FALSE;
+	if (timers_count >= MAX_TIMERS) return false;
 
         for (i = 0; i < timers_count; ++i) {
           if (timers_data[i].on_timer_function == on_timer_function) {
              timers_data[i].interval = interval;
              timers_data[i].tick = timers_get_tick();
-             return TRUE;
+             return true;
           }
         }
 
@@ -111,7 +111,7 @@ bool timers_add(on_timer_function_t * on_timer_function, uint32_t interval)
 	timers_data[timers_count].interval = interval;
 	timers_data[timers_count].tick = timers_get_tick();
 	timers_count++;
-	return TRUE;
+	return true;
 }
 
 

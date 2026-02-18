@@ -31,7 +31,7 @@ static uint16_t mp3play_volume = 100;
 //Tim
 static TIM_HandleTypeDef * mp3play_htim = NULL;
 //file is EOF
-static bool mp3play_enable = FALSE;
+static bool mp3play_enable = false;
 //samplerate
 static unsigned int mp3play_samplerate = 0;
 
@@ -119,7 +119,7 @@ void mp3play_stop(void)
 	//ulog("550"CRLF);
 	lwrb_reset(&mp3play_buffer);
 	//ulog("560"CRLF);
-	mp3play_enable = FALSE;
+	mp3play_enable = false;
 	mp3play_on_stop();
 	//ulog("570"CRLF);
 }
@@ -196,7 +196,7 @@ bool mp3play(const char * file_name, dacplay_data_t * dacplay_data, uint16_t vol
 {
 
 
-	if (!strlen(file_name)) return FALSE;
+	if (!strlen(file_name)) return false;
 
 	if (f_is_open(&mp3play_file)) {
 		f_close(&mp3play_file);
@@ -208,7 +208,7 @@ bool mp3play(const char * file_name, dacplay_data_t * dacplay_data, uint16_t vol
 
 	if (f_open(&mp3play_file, file_name, FA_READ) != FR_OK) {
 	     ulog_fmt("mp3play: error open file: %s"CRLF, file_name);
-	     return FALSE;
+	     return false;
 	}
 
 
@@ -225,7 +225,7 @@ bool mp3play(const char * file_name, dacplay_data_t * dacplay_data, uint16_t vol
 	mp3play_dacplay_data = dacplay_data;
 	mp3play_volume = volume;
 	mp3play_htim = htim;
-	mp3play_enable = TRUE;
+	mp3play_enable = true;
 	mp3play_samplerate = 0;
 
 	lwrb_reset(&mp3play_buffer);
@@ -241,7 +241,7 @@ bool mp3play(const char * file_name, dacplay_data_t * dacplay_data, uint16_t vol
 
 
     ulog_fmt("mp3play: play file:%s volume:%d play_on:%d"CRLF, file_name, mp3play_volume, mp3play_dacplay_data->id);
-	return TRUE;
+	return true;
 }
 
 void mp3play_init(uint8_t * buf, uint16_t buf_size)

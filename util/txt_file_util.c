@@ -21,16 +21,16 @@ bool txt_file_change_by_start_of_line(const char * file_name, char * start_of_li
 	char buf[MAX_STR_SIZE];
 
 
-	if (!start_of_line) return FALSE;
+	if (!start_of_line) return false;
 	str_len = strlen(start_of_line);
-	if (!str_len) return FALSE;
+	if (!str_len) return false;
 
 
-	if (f_open(&txt_file, file_name, FA_READ) != FR_OK)  return FALSE;
+	if (f_open(&txt_file, file_name, FA_READ) != FR_OK)  return false;
 
 	if ( f_open(&tmp_file, "tfcbsol."TMP_FILE_EXT, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) {
 		f_close(&txt_file);
-		return FALSE;
+		return false;
 	}
 
 	f_readln_init();
@@ -51,7 +51,7 @@ bool txt_file_change_by_start_of_line(const char * file_name, char * start_of_li
 	f_unlink(file_name);
 	f_rename("tfcbsol."TMP_FILE_EXT, file_name);
 
-	return TRUE;
+	return true;
 }
 
 //удалить строку из файла конфигурации по начальной строке
@@ -121,7 +121,7 @@ bool txt_file_print(const char * file_name)
 	char buf[MAX_STR_SIZE];
 
 
-	if ( f_open(&file, file_name, FA_READ) != FR_OK)  return FALSE;
+	if ( f_open(&file, file_name, FA_READ) != FR_OK)  return false;
 
 	f_readln_init();
 
@@ -133,6 +133,6 @@ bool txt_file_print(const char * file_name)
 
 	f_close(&file);
 
-	return TRUE;
+	return true;
 }
 

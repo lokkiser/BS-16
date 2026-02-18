@@ -8,8 +8,10 @@
 #ifndef _CFG_UTIL_H_
 #define _CFG_UTIL_H_
 
+#include <stdio.h>
 #include "def_util.h"
 //#include "map_util.h"
+#include "fatfs_util.h"
 
 
 
@@ -18,7 +20,7 @@ void cfg_on_read_key_value(char * key, char * value);
 bool cfg_read(const char * cfg_file_name);
 bool cfg_write_key_value(FIL * cfg_file, char * key, char * value);
 
-char * cfg_read_string(const char * cfg_file_name, char * key);
+char * cfg_read_string(const char * cfg_file_name,const char * key);
 bool cfg_write_string(const char * cfg_file_name, char * key, char * value);
 
 /*

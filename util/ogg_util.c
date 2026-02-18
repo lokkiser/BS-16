@@ -10,7 +10,7 @@ void ogg_decoder_init(ogg_decoder_t * ogg_decoder, ogg_stream_t stream, ogg_stre
 {
   ogg_decoder->stream = stream;
   ogg_decoder->stream_read = stream_read;
-  ogg_decoder->page_load = FALSE;
+  ogg_decoder->page_load = false;
   ogg_decoder->segment_index = 0;
 #ifdef OGG_STATISTIC
   ogg_decoder->stat_pages_cnt = 0;

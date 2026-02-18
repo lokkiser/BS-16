@@ -171,8 +171,8 @@ char * strtrim(char * str)
 
 bool memcmp_s(void * mem1, size_t mem1_size, const void * mem2, size_t mem2_size)
 {
-  if (!mem1 || !mem2 || !mem1_size || !mem2_size) return FALSE;
-  if (mem2_size > mem1_size)  return FALSE;
+  if (!mem1 || !mem2 || !mem1_size || !mem2_size) return false;
+  if (mem2_size > mem1_size)  return false;
   return (memcmp(mem1, mem2, mem2_size) == 0);
 }
 
@@ -183,7 +183,7 @@ bool strncmp_s(char * s1, size_t s1_size, const char * s2, size_t s2_count)
 
 bool strcmp_s(char * s1, size_t s1_size, const char * s2)
 {
-  if (!s2) return FALSE;
+  if (!s2) return false;
 
   return strncmp_s(s1, s1_size, s2, strlen(s2));
 }
@@ -192,10 +192,10 @@ bool strequals(char * s1, const char * s2)
 {
 	size_t len;
 
-	if (!s1 || !s2) return FALSE;
+	if (!s1 || !s2) return false;
 
 	len = strlen(s1);
-	if (len != strlen(s2)) return FALSE;
+	if (len != strlen(s2)) return false;
 	return (memcmp(s1, s2, len) == 0);
 }
 
@@ -203,22 +203,22 @@ bool strcaseequals(char * s1, char const *s2)
 {
 	size_t len, i;
 
-	if (!s1 || !s2) return FALSE;
+	if (!s1 || !s2) return false;
 
 	len = strlen(s1);
-	if (len != strlen(s2)) return FALSE;
+	if (len != strlen(s2)) return false;
 
 	for (i = 0; i < len; ++i) {
-		if (tolower(s1[i]) != tolower(s2[i])) return FALSE;
+		if (tolower(s1[i]) != tolower(s2[i])) return false;
 	}
-	return TRUE;
+	return true;
 }
 
 bool str2lower(char * dest, size_t dest_size, const char * src)
 {
 	size_t len, i, cnt;
 
-	if (!dest || !src) return FALSE;
+	if (!dest || !src) return false;
 
 	len = strlen(src);
 
@@ -228,14 +228,14 @@ bool str2lower(char * dest, size_t dest_size, const char * src)
 		dest[i] = tolower(src[i]);
 	}
 	dest[cnt] = '\0';
-	return TRUE;
+	return true;
 }
 
 bool str2upper(char * dest, size_t dest_size, const char * src)
 {
 	size_t len, i, cnt;
 
-	if (!dest || !src) return FALSE;
+	if (!dest || !src) return false;
 
 	len = strlen(src);
 
@@ -245,7 +245,7 @@ bool str2upper(char * dest, size_t dest_size, const char * src)
 		dest[i] = toupper(src[i]);
 	}
 	dest[cnt] = '\0';
-	return TRUE;
+	return true;
 }
 
 
@@ -371,7 +371,7 @@ unsigned long long str2ull(char * str)
 
 	if (!str) return 0;
 
-	digit_found = FALSE;
+	digit_found = false;
 	ptr = str;
 	res = 0;
 
@@ -379,7 +379,7 @@ unsigned long long str2ull(char * str)
 		if ((*ptr < '0' || *ptr > '9')) {
 			if (digit_found) break;
 		} else {
-			digit_found = TRUE;
+			digit_found = true;
 			res *= 10;
 			res += (*ptr - '0');
 		}
@@ -430,14 +430,14 @@ bool strnisdigit(char * str, unsigned char str_count)
   unsigned char i;
 
   for (i = 0; i < str_count; ++i) {
-    if ( (str[i] < '0') || (str[i] > '9') ) return FALSE;
+    if ( (str[i] < '0') || (str[i] > '9') ) return false;
   }
-  return TRUE;
+  return true;
 }
 
 bool strisdigit(char * str)
 {
-  if (!str) return FALSE;
+  if (!str) return false;
 
   return strnisdigit(str, strlen(str));
 }
@@ -736,10 +736,10 @@ char * bool2str(bool val)
 
 bool str2bool(char * str)
 {
-	if (strcmp_s(str, strlen(str), "true")) return TRUE;
-	if (strcmp_s(str, strlen(str), "false")) return FALSE;
+	if (strcmp_s(str, strlen(str), "true")) return true;
+	if (strcmp_s(str, strlen(str), "false")) return false;
 
-	return (str2int(str) ? TRUE : FALSE);
+	return (str2int(str) ? true : false);
 }
 
 void uch_to_bitstr(unsigned char val, char * buf, size_t buf_size)

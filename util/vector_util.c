@@ -13,7 +13,7 @@ void vector_init(vector_t *v, size_t data_size)
     v->first = NULL;
     v->data_size = data_size;
     v->count = 0;
-    v->busy = FALSE;
+    v->busy = false;
 }
 
 
@@ -37,13 +37,13 @@ bool vector_push(vector_t *v, void * data)
      item = v->first;
   }
 
-  if (!item)  return FALSE;
+  if (!item)  return false;
 
   memcpy(item->data, data, v->data_size);
   item->next = NULL;
   v->count++;
 
-  return TRUE;
+  return true;
 }
 
 
@@ -80,13 +80,13 @@ bool vector_set_at(vector_t *v, size_t index, void * data)
   while (item) {
      if (i == index) {
        memcpy(item->data, data, v->data_size);
-       return TRUE;
+       return true;
      }
      i++;
      item = item->next;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -109,14 +109,14 @@ bool vector_pop(vector_t *v, void * data)
 {
   vector_item_t * item;
 
-  if (!v->first) return FALSE;
+  if (!v->first) return false;
 
   memcpy(data, v->first->data, v->data_size);
   item = v->first->next;
   free(v->first);
   v->first = item;
   v->count--;
-  return TRUE;
+  return true;
 }
 
 bool vector_delete_at(vector_t *v, size_t index)
@@ -124,7 +124,7 @@ bool vector_delete_at(vector_t *v, size_t index)
   size_t i;
   vector_item_t * item, * next, * prev;
 
-  if (!v->first) return FALSE;
+  if (!v->first) return false;
 
   item = v->first;
   prev = NULL;
@@ -136,13 +136,13 @@ bool vector_delete_at(vector_t *v, size_t index)
        if (prev) prev->next = next;
        else v->first = next;
        v->count--;
-       return TRUE;
+       return true;
      }
      i++;
      prev = item;
      item = item->next;
   }
 
-  return FALSE;
+  return false;
 
 }

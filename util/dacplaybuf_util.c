@@ -15,7 +15,7 @@ typedef struct _dacplaybuf_data {
 	uint8_t dac_channel;
 	TIM_HandleTypeDef * htim1;
 
-	uint16_t dma_buf[2][dacplaybuf_DMA_BUF_SIZE];
+	uint16_t dma_buf[2][DACPLAYBUF_DMA_BUF_SIZE];
 
 	uint8_t dma_index = 0xFF;
 	bool dma_started = false;
@@ -31,12 +31,12 @@ typedef struct _dacplaybuf_data {
 #define dacplaybuf_DAC_CHANNEL		DAC_CHANNEL_1
 #define dacplaybuf_HTIM			htim8
 
-#define dacplaybuf_DMA_BUF_SIZE	640
+#define DACPLAYBUF_DMA_BUF_SIZE	640
 #define dacplaybuf_LWRB_DATA_SIZE	6400
 
 
 //буффер под DMA
-static uint16_t dacplaybuf_dma_buf[2][dacplaybuf_DMA_BUF_SIZE];
+static uint16_t dacplaybuf_dma_buf[2][DACPLAYBUF_DMA_BUF_SIZE];
 static uint8_t dacplaybuf_dma_index = 0xFF;
 static bool dacplaybuf_dma_started = false;
 static uint32_t dacplaybuf_frequency = 8000;
@@ -77,7 +77,7 @@ void dacplaybuf_start_dma(dacplaybuf_data_t* dacplaybuf_data)
 		set_tim_frequency2(dacplaybuf_data->htim, dacplaybuf_data->frequency, BASE_TIM_FREQUENSY);
 		HAL_TIM_Base_Start(dacplaybuf_data->htim);
 	}
-	HAL_DAC_Start_DMA(dacplaybuf_data->hdac, dacplaybuf_data->dac_channel, (uint32_t*)dacplaybuf_data->dma_buf, dacplaybuf_DMA_BUF_SIZE * 2, DAC_ALIGN_12B_R);
+	HAL_DAC_Start_DMA(dacplaybuf_data->hdac, dacplaybuf_data->dac_channel, (uint32_t*)dacplaybuf_data->dma_buf, DACPLAYBUF_DMA_BUF_SIZE * 2, DAC_ALIGN_12B_R);
 	dacplaybuf_data->dma_started = true;
 	ulog_fmt("dacplay: start dma frequency: %lu (id:%d)"CRLF, dacplaybuf_data->frequency, dacplaybuf_data->id);
 }
@@ -140,7 +140,7 @@ void dacplaybuf_reset(dacplaybuf_data_t* dacplaybuf_data)
 
 	lwrb_reset(&dacplaybuf_data->lwrb);
 
-	for (i = 0; i < dacplaybuf_DMA_BUF_SIZE; i++) 
+	for (i = 0; i < DACPLAYBUF_DMA_BUF_SIZE; i++) 
 	{
 		dacplaybuf_data->dma_buf[0][i] = 2047;
 		dacplaybuf_data->dma_buf[1][i] = 2047;
@@ -162,7 +162,7 @@ void dacplaybuf_fill(dacplaybuf_data_t * dacplaybuf_data)
 
 	if (rc < sizeof(dacplaybuf_data->dma_buf[dacplaybuf_data->dma_index])) 
 	{
-		for (i = rc / 2; i < dacplaybuf_DMA_BUF_SIZE; ++i) dacplaybuf_data->dma_buf[dacplaybuf_data->dma_index][i] = 2047;
+		for (i = rc / 2; i < DACPLAYBUF_DMA_BUF_SIZE; ++i) dacplaybuf_data->dma_buf[dacplaybuf_data->dma_index][i] = 2047;
 		//ulog_fmt("dacplay: buffer empty (%d %lu) (id:%d)"CRLF, dacplaybuf_data->dma_index, rc, dacplaybuf_data->id);
 	}
 

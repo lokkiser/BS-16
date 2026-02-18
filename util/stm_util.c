@@ -894,7 +894,7 @@ bool hal_write_flash_buf_to_flash_page(uint32_t pageAddress)
 	HAL_StatusTypeDef erase_error;
 
 
-	res = FALSE;
+	res = false;
 
 	hal_flash_unlocked();
 
@@ -909,7 +909,7 @@ bool hal_write_flash_buf_to_flash_page(uint32_t pageAddress)
 			HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, pageAddress  + j * 8, Data);
 			FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);  // Ожидаем окончания операции
 		}
-		res = TRUE;
+		res = true;
 	}
 
 	hal_flash_locked();

@@ -30,7 +30,7 @@ bool line_buf_pop(line_buf_t * line_buf, void * buf, size_t buf_size, size_t * d
   size_t count;
   size_t dl;
 
-  if (!line_buf->dynamic_buf.first) return FALSE;
+  if (!line_buf->dynamic_buf.first) return false;
 
   ptr = buf;
   count = buf_size;
@@ -38,7 +38,7 @@ bool line_buf_pop(line_buf_t * line_buf, void * buf, size_t buf_size, size_t * d
         if (!dynamic_buf_pop(line_buf, ptr, line_buf->dynamic_buf.first->data_len, &dl)) {
                *data_len = buf_size - count;
                line_buf->firs_cnt = 0;
-               return TRUE;
+               return true;
         }
         count -= dl;
         ptr += dl;
@@ -47,13 +47,13 @@ bool line_buf_pop(line_buf_t * line_buf, void * buf, size_t buf_size, size_t * d
   if (!count) {
     *data_len = buf_size;
     line_buf->firs_cnt = 0;
-    return TRUE;
+    return true;
   }
 
   if (!line_buf->dynamic_buf.first) {
     *data_len = buf_size - count;
     line_buf->firs_cnt = 0;
-    return TRUE;
+    return true;
   }
 
   memcpy(ptr, line_buf->dynamic_buf.first->data + line_buf->firs_cnt, count);
@@ -61,7 +61,7 @@ bool line_buf_pop(line_buf_t * line_buf, void * buf, size_t buf_size, size_t * d
 
   line_buf->firs_cnt += count;
 
-  return TRUE;
+  return true;
 }
 
 void line_buf_clear(line_buf_t * line_buf)

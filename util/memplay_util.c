@@ -32,7 +32,7 @@ static uint16_t memplay_volume = 100;
 //tim
 static TIM_HandleTypeDef * memplay_htim = NULL;
 //memplay enable
-static bool memplay_enable = FALSE;
+static bool memplay_enable = false;
 //size
 static uint32_t memplay_size = 0;
 //mem
@@ -125,7 +125,7 @@ void memplay_stop(void)
 		dacplay_stop_dma(memplay_dacplay_data);
 
 	lwrb_reset(&memplay_buffer);
-	memplay_enable = FALSE;
+	memplay_enable = false;
 	memplay_on_stop();
 }
 
@@ -216,7 +216,7 @@ void memplay(const uint8_t * mem, uint32_t mem_size, dacplay_data_t * dacplay_da
 
 	memplay_mem = (uint8_t *)mem;
 	memplay_size = mem_size;
-	memplay_enable = TRUE;
+	memplay_enable = true;
 	memplay_samplerate = 0;
 
     ulog_fmt("memplay: play MEM mem_size:%lu volume:%d play_on:%d"CRLF, mem_size, memplay_volume, dacplay_data->id);

@@ -26,7 +26,7 @@ bool map_put(map_t * map, void * key, size_t key_len, void * value, size_t value
 	  }
 
 	  if (!item) {
-	       return FALSE;
+	       return false;
 	  }
 
 	  item->key_len = key_len;
@@ -35,7 +35,7 @@ bool map_put(map_t * map, void * key, size_t key_len, void * value, size_t value
 	  memcpy(item->data + key_len, value, value_len);
 	  item->next = NULL;
 	  map->count++;
-	  return TRUE;
+	  return true;
 }
 
 void * map_get(map_t * map, void * key, size_t key_len, size_t * value_len)
@@ -75,7 +75,7 @@ void map_init(map_t * map)
 {
 	map->first = NULL;
 	map->count = 0;
-	map->busy = FALSE;
+	map->busy = false;
 }
 
 bool map_delete(map_t * map, void * key, size_t key_len)
@@ -91,13 +91,13 @@ bool map_delete(map_t * map, void * key, size_t key_len)
 			  if (prev) prev->next = next;
 			  else map->first = next;
 			  map->count--;
-			  return TRUE;
+			  return true;
 		  }
 		  prev = item;
 		  item = item->next;
 	  }
 
-	  return FALSE;
+	  return false;
 }
 
 
@@ -121,11 +121,11 @@ bool map_change(map_t * map, void * key, size_t key_len, void * value, size_t va
 			  item->next = next;
 			  if (prev) prev->next = item;
 			  else map->first = item;
-			  return TRUE;
+			  return true;
 		  }
 		  prev = item;
 		  item = item->next;
 	  }
 
-	  return FALSE;
+	  return false;
 }

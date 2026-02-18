@@ -14,16 +14,16 @@ bool start_after(on_start_after_function_t * on_start_after_function, void * par
 {
     int i;
 
-    if (!on_start_after_function || !interval) return FALSE;
+    if (!on_start_after_function || !interval) return false;
 
-	if (start_after_count >= MAX_START_AFTER) return FALSE;
+	if (start_after_count >= MAX_START_AFTER) return false;
 
         for (i = 0; i < start_after_count; ++i) {
           if (start_after_data[i].on_start_after_function == on_start_after_function) {
         	  start_after_data[i].param = param;
         	  start_after_data[i].tick = start_after_get_tick();
         	  start_after_data[i].tick += interval;
-        	  return TRUE;
+        	  return true;
           }
         }
 
@@ -32,7 +32,7 @@ bool start_after(on_start_after_function_t * on_start_after_function, void * par
     start_after_data[start_after_count].tick = start_after_get_tick();
     start_after_data[start_after_count].tick += interval;
     start_after_count++;
-	return TRUE;
+	return true;
 }
 
 

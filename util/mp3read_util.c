@@ -70,7 +70,7 @@ bool mp3read_open(FIL * file, mad_data_t *amad_data, const char * file_name)
 {
 
 
-	if (!strlen(file_name)) return FALSE;
+	if (!strlen(file_name)) return false;
 
 	mp3read_close(file, amad_data);
 
@@ -78,7 +78,7 @@ bool mp3read_open(FIL * file, mad_data_t *amad_data, const char * file_name)
 
 	if (f_open(file, file_name, FA_READ) != FR_OK) {
 	     //ulog_fmt("mp3read_open: error open file: %s"CRLF, file_name);
-	     return FALSE;
+	     return false;
 	}
 
 
@@ -93,7 +93,7 @@ bool mp3read_open(FIL * file, mad_data_t *amad_data, const char * file_name)
 
 
     //ulog_fmt("mp3read_open: file:%s"CRLF, file_name);
-	return TRUE;
+	return true;
 }
 
 

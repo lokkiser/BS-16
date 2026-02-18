@@ -16,10 +16,10 @@ bool json_find_key_value(char * str, char * key, char * buf, uint16_t buf_len)
 	char * ptr, * ptre;
 
 	ptr = strright(str, strlen(str), key);
-	if (!ptr) return FALSE;
+	if (!ptr) return false;
 
 	ptr = strright(ptr, strlen(ptr), ":");
-	if (!ptr) return FALSE;
+	if (!ptr) return false;
 
 
 	ptre = strstr_s(ptr, strlen(ptr), ",");
@@ -30,7 +30,7 @@ bool json_find_key_value(char * str, char * key, char * buf, uint16_t buf_len)
 	strncpy_s(buf, buf_len, ptr, ptre - ptr);
 	strcpy_s(buf, buf_len, strtrim(buf));
 
-	return TRUE;
+	return true;
 }
 
 char * json_get_value(char * json, char * key, uint16_t * len)

@@ -18,9 +18,9 @@ void uart_rx_idle_wait(uart_rx_idle_data_t * uart_rx_idle_data)
 //должно вызываться из void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 void uart_rx_idle_callback_data(uart_rx_idle_data_t * uart_rx_idle_data, uint16_t Size)
 {
-	uart_rx_idle_data->dynbuf.busy = TRUE;
+	uart_rx_idle_data->dynbuf.busy = true;
 	dynamic_buf_push(&uart_rx_idle_data->dynbuf, uart_rx_idle_data->buf, Size);
-	uart_rx_idle_data->dynbuf.busy = FALSE;
+	uart_rx_idle_data->dynbuf.busy = false;
 	uart_rx_idle_wait(uart_rx_idle_data);
 }
 

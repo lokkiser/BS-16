@@ -70,13 +70,13 @@ bool wavplay(const char * file_name, dacplay_data_t * dacplay_data, uint16_t vol
 	wavplay_stop();
 
 
-	if (!strlen(file_name)) return FALSE;
+	if (!strlen(file_name)) return false;
 
 	rc = wavopenfile(file_name, &wavplay_file, &wavplay_wav_hdr);
 
 	if (rc != WAV_OK) {
 		ulog_fmt("wavplay: error WAV file %s, res:%s"CRLF, file_name, rc);
-		return FALSE;
+		return false;
 	}
 
 	wavplay_dacplay_data = dacplay_data;
@@ -89,6 +89,6 @@ bool wavplay(const char * file_name, dacplay_data_t * dacplay_data, uint16_t vol
 
 	ulog_fmt("wavplay: play WAV file %s (bit:%d, chan:%d, freq:%ld, play_on:%d)"CRLF, file_name, wavplay_wav_hdr.bits_per_sample, wavplay_wav_hdr.channel, wavplay_wav_hdr.sampling_f, wavplay_dacplay_data->id);
 
-	return TRUE;
+	return true;
 }
 

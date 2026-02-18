@@ -486,7 +486,7 @@ uint8_t wavopenfile(const char * wav_file_name, FIL * a_file, wav_header_t * a_f
 
 
 	id_size = 0;
-	while (TRUE) {
+	while (true) {
 	    fr = f_read(a_file, &b, 1,  &br);
 	    if (fr != FR_OK) break;
 	    if (b != 'd') continue;

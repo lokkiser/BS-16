@@ -18,15 +18,15 @@
 #ifndef bool
 #define bool    BOOL
 #endif
-
+*/
 #ifndef TRUE
-#define TRUE	!!1
+#define TRUE	true //!!1
 #endif
 
 #ifndef FALSE
-#define FALSE	!TRUE
+#define FALSE	false//!TRUE
 #endif
-*/
+
 #ifndef ON
 #define ON		1
 #endif

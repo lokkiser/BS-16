@@ -33,8 +33,10 @@ void console_RxEventCallback(uint16_t Size)
 {
 	uint16_t i;
 
-	for (i = console_index; i < console_index + Size; i++) {
-		if ((console_buf[i] == '\r') || (console_buf[i] == '\n')) {
+	for (i = console_index; i < console_index + Size; i++)
+	{
+		if ((console_buf[i] == '\r') || (console_buf[i] == '\n'))
+		{
 			console_buf[i] = '\0';
 			console_rn_index = i;
 			console_index = 0;

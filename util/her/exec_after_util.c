@@ -48,7 +48,7 @@ void exec_after_task(void)
 
 		exec_after_data = (exec_after_data_t *)vector_get_at(&exec_after_vector, i);
 		if (exec_after_diff_tick(exec_after_data->tick) > exec_after_data->timeout) {
-			if (exec_after_data->func) exec_after_data->func(exec_after_data->id, FALSE);
+			if (exec_after_data->func) exec_after_data->func(exec_after_data->id, false);
 			vector_delete_at(&exec_after_vector, i);
 		}
 	}
@@ -64,7 +64,7 @@ void exec_after_abort(uint32_t id)
 
 		exec_after_data = (exec_after_data_t *)vector_get_at(&exec_after_vector, i);
 		if (exec_after_data->id == id) {
-                        if (exec_after_data->func) exec_after_data->func(exec_after_data->id, TRUE);
+                        if (exec_after_data->func) exec_after_data->func(exec_after_data->id, true);
 			vector_delete_at(&exec_after_vector, i);
 		}
 	}

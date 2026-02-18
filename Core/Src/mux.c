@@ -212,61 +212,12 @@ void set_on_p(uint8_t on_p, i2c_mux_line_state_e state)
 	mki_set_led_color(on_p, on_p ? MKI_LED_COLOR_BLUE : color);
 }
 
-i2c_mux_line_state_e get_on_p(uint8_t on_p)
+i2c_mux_line_state_e get_on_p_mod(uint8_t on_p)
 {
-	switch (on_p) 
-	{
-		case 1:
-			return (dd3_value & (1 << ON_P_1))  | (dd3_value & (1 << AWAIT_CTRL_1));
-		break;
-		case 2:
-			return (dd3_value & (1 << ON_P_2))  | (dd3_value & (1 << AWAIT_CTRL_2));
-		break;
-		case 3:
-			return (dd3_value & (1 << ON_P_3))  | (dd3_value & (1 << AWAIT_CTRL_3));
-		break;
-		case 4:
-			return (dd3_value & (1 << ON_P_4))  | (dd3_value & (1 << AWAIT_CTRL_4));
-		break;
-		case 5:
-			return (dd3_value & (1 << ON_P_5))  | (dd3_value & (1 << AWAIT_CTRL_5));
-		break;
-		case 6:
-			return (dd3_value & (1 << ON_P_6))  | (dd3_value & (1 << AWAIT_CTRL_6));
-		break;
-		case 7:
-			return (dd3_value & (1 << ON_P_7))  | (dd3_value & (1 << AWAIT_CTRL_7));
-		break;
-		case 8:
-			return (dd3_value & (1 << ON_P_8))  | (dd3_value & (1 << AWAIT_CTRL_8));
-		break;
-		case 9:
-			return (dd8_value & (1 << ON_P_9))  | (dd8_value & (1 << AWAIT_CTRL_9));
-		break;
-		case 10:
-			return (dd8_value & (1 << ON_P_10)) | (dd8_value & (1 << AWAIT_CTRL_10));
-		break;
-		case 11:
-			return (dd8_value & (1 << ON_P_11)) | (dd8_value & (1 << AWAIT_CTRL_11));
-		break;
-		case 12:
-			return (dd8_value & (1 << ON_P_12)) | (dd8_value & (1 << AWAIT_CTRL_12));
-		break;
-		case 13:
-			return (dd8_value & (1 << ON_P_13)) | (dd8_value & (1 << AWAIT_CTRL_13));
-		break;
-		case 14:
-			return (dd8_value & (1 << ON_P_14)) | (dd8_value & (1 << AWAIT_CTRL_14));
-		break;
-		case 15:
-			return (dd8_value & (1 << ON_P_15)) | (dd8_value & (1 << AWAIT_CTRL_15));
-		break;
-		case 16:
-			return (dd8_value & (1 << ON_P_16)) | (dd8_value & (1 << AWAIT_CTRL_16));
-		break;
-		default:
-			return ERROR;
-	}
+    uint16_t res = (on_p <= 8) ? dd3_value : dd8_value;
+    res >>= ((on_p-1)%8)*2;
+
+    return res&0x3;
 }
 
 void mux_init(void)

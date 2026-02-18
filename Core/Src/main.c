@@ -22,7 +22,28 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
+#include "stm_util.h"
+#include "mki.h"
+#include "mux.h"
+#include "console.h"
+#include "rtc.h"
+#include "timer_util.h"
+#include "local_mic.h"
+#include "local_spk.h"
+#include "ctrl.h"
+#include "akb.h"
+#include "fault.h"
+#include "datetime_util.h"
+#include "fatfs_util.h"
+#include "flash_io.h"
+#include "setting.h"
+#include "logfile_util.h"
+#include "str_util.h"
+#include "mp3play_util.h"
+#include "memplay_util.h"
+#include "dacplay_util.h"
+#include "mp3files.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -100,7 +121,178 @@ static void MX_IWDG_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+bool fatfs_mount = false;
 
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	//fulog_fmt("i%d"CRLF, GPIO_Pin);
+	if (GPIO_Pin == INT1_Pin)
+	{
+		dd5_change_tick = HAL_GetTickNoZero();
+	}
+	else if (GPIO_Pin == INT2_Pin)
+  	{
+		dd6_change_tick = HAL_GetTickNoZero();
+	}
+}
+
+void UART_flush(UART_HandleTypeDef *huart)
+{
+  // Flush UART RX buffer if RXNE is set
+  if READ_BIT(huart->Instance->ISR, UART_FLAG_RXNE)
+  {
+    SET_BIT(huart->Instance->RQR, UART_RXDATA_FLUSH_REQUEST);
+  }
+
+  // Not available on F030xx devices!
+  SET_BIT(huart->Instance->RQR, UART_TXDATA_FLUSH_REQUEST);
+
+  // Clear All Errors (if needed)
+  if (READ_BIT(huart->Instance->ISR, UART_FLAG_ORE | UART_FLAG_FE | UART_FLAG_NE))
+  {
+    __HAL_UART_CLEAR_PEFLAG(huart);
+    __HAL_UART_CLEAR_OREFLAG(huart);
+    __HAL_UART_CLEAR_FEFLAG(huart);
+    __HAL_UART_CLEAR_NEFLAG(huart);
+    __HAL_UART_CLEAR_IDLEFLAG(huart);
+    __HAL_UART_CLEAR_TXFECF(huart);
+  }
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+	UART_flush(huart);
+}
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+	if (huart == CONSOLE_UART )
+  {
+		console_RxEventCallback(Size);
+	}
+}
+
+void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
+{
+	if (hadc ==  LOCAL_MIC_ADC_HANDLE)
+  {
+		local_mic_adc_HalfCpltCallback();
+	}
+}
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+	if (hadc ==  LOCAL_MIC_ADC_HANDLE)
+  {
+		local_mic_adc_FullCpltCallback();
+	}
+	else
+  {
+		ctrl_FullCpltCallback(hadc);
+	}
+}
+
+void HAL_DAC_ConvHalfCpltCallbackCh1(DAC_HandleTypeDef *hdac)
+{
+	if (hdac == LOCAL_MIC_DAC_HANDLE)
+  {
+		local_mic_dac_HalfCpltCallback();
+	}
+	else if (hdac == LOCAL_SPK_DAC_HANDLE)
+  {
+		local_spk_dac_HalfCpltCallback();
+	}
+}
+
+void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef *hdac)
+{
+	if (hdac == LOCAL_MIC_DAC_HANDLE)
+  {
+		local_mic_dac_FullCpltCallback();
+	}
+	else if (hdac == LOCAL_SPK_DAC_HANDLE)
+  {
+		local_spk_dac_FullCpltCallback();
+	}
+}
+
+void HAL_DAC_ErrorCallbackCh1(DAC_HandleTypeDef *hdac)
+{
+}
+
+uint32_t timers_get_tick(void)
+{
+	return HAL_GetTick();
+}
+
+
+#include "pca9635.h"
+
+//static uint8_t test_led_color = MKI_LED_COLOR_BLACK;
+//static uint8_t test_ld = 0;
+
+void on_timer_10_msec(void)
+{
+}
+
+void on_timer_50_msec(void)
+{
+	mki_task();
+	memplay_task();
+}
+
+void on_timer_250_msec(void)
+{
+	console_task();
+	ctrl_task();
+
+	//PCA9635_write_registers(MKI_I2C_HANDLE, MKI_DD1_ADDERESS, PCA9635_REG_LEDOUT1, test_ld);
+	//test_ld++;
+}
+
+void on_timer_1_sec(void)
+{
+	HAL_IWDG_Refresh(&hiwdg);
+
+/*
+	for (uint8_t i = MKI_LED_1;i <= MKI_LED_START; i++)
+  {
+		mki_set_led_color(i, test_led_color);
+	}
+	test_led_color++;
+	if (test_led_color > MKI_LED_COLOR_WHITE) test_led_color = MKI_LED_COLOR_BLACK;
+
+	PIN_TOGGLE(P220_OUT);
+*/
+
+  //mki_test();
+
+	if (fulog_buf[0] != '\0')
+  {
+		ulog(fulog_buf);
+		fulog_buf[0] = '\0';
+	}
+}
+
+
+void on_timer_1_min(void)
+{
+	akb_task();
+}
+
+
+//file log
+void filelog(char * str)
+{
+	char buf[MAX_STR_SIZE];
+
+	strcpy_s(buf, sizeof(buf), rtc_read_datetime_str(true));
+	strcat_s(buf, sizeof(buf), " ");
+	strcat_s(buf, sizeof(buf), str);
+	//strcat_s(buf, sizeof(buf), CRLF);
+
+	logfile_add(buf);
+}
 /* USER CODE END 0 */
 
 /**
@@ -147,7 +339,142 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM15_Init();
   /* USER CODE BEGIN 2 */
+  __HAL_RCC_I2C1_CLK_ENABLE();
+    HAL_Delay(100);
+    __HAL_RCC_I2C1_FORCE_RESET();
+    HAL_Delay(100);
+    __HAL_RCC_I2C1_RELEASE_RESET();
+    HAL_Delay(100);
 
+    HAL_DAC_MspInit(&hdac1); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
+    HAL_DAC_MspInit(&hdac2); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
+
+    HAL_ADC_MspInit(&hadc1);
+    HAL_ADC_MspInit(&hadc2);
+    HAL_ADC_MspInit(&hadc5);
+
+    set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
+    HAL_TIM_Base_Start(&htim15);
+
+    HAL_Delay(1000);
+
+    ulog("Start Trombon BC-16"CRLF);
+    //ulog_fmt("Version: %s"CRLF, VERSION);
+    ulog_fmt("Version: %s"CRLF, "1.0"); // TODO
+
+  /*
+    HAL_I2C_StateTypeDef st;
+    st = HAL_I2C_GetState(MKI_I2C_HANDLE);
+    ulog_fmt("hi2c4 state %d"CRLF, st);
+    st = HAL_I2C_GetState(&hi2c3);
+    ulog_fmt("hi2c3 state %d"CRLF, st);
+
+    for (int i = 0; i < 127; ++i)
+    {
+  	  HAL_IWDG_Refresh(&hiwdg);
+  	  ulog_fmt("Scan hi2c4 %d"CRLF, i);
+  	  if (HAL_I2C_IsDeviceReady(&hi2c4, i << 1, 3, 1000) == HAL_OK)
+      {
+  		  ulog_fmt("Detect hi2c4 %d"CRLF, i);
+  	  }
+    }
+
+    for (i = 0; i < 127; ++i)
+    {
+  	  HAL_IWDG_Refresh(&hiwdg);
+  	  ulog_fmt("Scan hi2c3 %d"CRLF, i);
+  	  if  (HAL_I2C_IsDeviceReady(&hi2c3, i << 1, 3, 1000) == HAL_OK)
+      {
+  		  ulog_fmt("Detect hi2c3 %d"CRLF, i);
+  	  }
+    }
+  */
+
+    mki_init();
+    mux_init();
+    console_init();
+
+    fatfs_mount = false;
+
+    if (flash_init())
+    {
+  	  ulog("main: W25Q detected"CRLF);
+
+  	  fatfs_mount = f_mount_cnt(&f_global_fatfs, 3);
+  	  if (!fatfs_mount)  fatfs_mount = f_format_and_mount(&f_global_fatfs, F_MKFS_FMT_DEFAULT);
+  	  ulog_fmt("main: FatFs f_mount() %s"CRLF, fatfs_mount ? "ok" : "error");
+
+    } else ulog("main: error W25Q not detected"CRLF);
+
+    if (fatfs_mount)
+    {
+  	  if (f_exists(BC16_LOADER_FILE_NAME))
+      {
+  		  ulog("Copy "BC16_LOADER_FILE_NAME" to stm32 flash base"CRLF);
+  		  f_erase_and_copy_to_flash(BC16_LOADER_FILE_NAME, FLASH_BASE, BC16_FLASH_TYPE);
+  		  ulog("Unlink "BC16_LOADER_FILE_NAME""CRLF);
+  		  f_unlink(BC16_LOADER_FILE_NAME);
+  	  }
+    }
+    else
+    {
+  	  ulog("main: error mount FatFs"CRLF);
+  	  set_fault(FAULT_HARDWARE_ERROR);
+    }
+
+    load_setting();
+    ulog_fmt("main: cfg "SETTING_KEY_MIC_VOLUME"=%d"CRLF, setting.mic_volume);
+    ulog_fmt("main: cfg "SETTING_KEY_SPK_VOLUME"=%d"CRLF, setting.mic_volume);
+    ulog_fmt("main: cfg "SETTING_KEY_DATE_TIME" =%s"CRLF, setting.date_time );
+
+    if (HAL_I2C_IsDeviceReady(RTC_I2C_HANDLE, (RTC_I2C_ADDRESS << 1), 3, 1000) != HAL_OK)
+    {
+  	  ulog_fmt("main: error bq32000 not ready"CRLF);
+  	  set_fault(FAULT_HARDWARE_ERROR);
+    }
+    rtc_init();
+    //RTC_Time rtcTime;
+    //rtcTime.year = 24;
+    //rtcTime.hours  = 1;
+    //rtcTime.seconds = 23;
+    //rtcTime.month = 4;
+    //rtcTime.minutes =5;
+    //rtcTime.dayOfWeek =2;
+    //rtcTime.day =6;
+    //RTC_BQ32000_SetTime(&hi2c3, &rtcTime);
+    ulog_fmt("BQ32000: dattetime now %s"CRLF, rtc_read_datetime_str(true));
+
+    if (strlen(setting.date_time))
+    {
+  	  rtc_set_datetime_str(setting.date_time);
+  	  memset(setting.date_time, 0, sizeof(setting.date_time));
+  	  save_setting();
+    }
+    else if ( ((globalRTC_Time.year < 26) || (globalRTC_Time.year > 40)) ||
+  		  !MONTH_GOD(globalRTC_Time.month) ||
+  		  !DATE_GOD(globalRTC_Time.day) ||
+  		  !HOUR_GOD(globalRTC_Time.hours) ||
+  		  !MINUTE_GOD(globalRTC_Time.minutes) ||
+  		  !SECOND_GOD(globalRTC_Time.seconds) )
+    {
+  	  rtc_set_datetime_str("2026-01-19T10:16:01");
+    }
+
+    akb_init();
+    ctrl_init();
+
+    timers_add(on_timer_10_msec, 10);
+    timers_add(on_timer_50_msec, 50);
+    timers_add(on_timer_250_msec, 250);
+    timers_add(on_timer_1_sec, 1000);
+    timers_add(on_timer_1_min, 60000);
+
+    filelog("Перезагрузка"CRLF);
+
+    memplay_init(sound_buf, sizeof(sound_buf));
+    memplay(start_sound, sizeof(start_sound), &spk_dacplay_data, setting.spk_volume, &htim15);
+
+    ulog("BC-16 goto loop"CRLF);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -157,6 +484,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  timers_task();
   }
   /* USER CODE END 3 */
 }

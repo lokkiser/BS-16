@@ -28,6 +28,7 @@
 							<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.converthex.689308640" name="Convert to Intel Hex file (-O ihex)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.converthex" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 							<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.convertbinary.126220032" name="Convert to binary file (-O binary)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.convertbinary" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 							<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.toolchain.2095756092" name="Toolchain" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.toolchain" useByScannerDiscovery="false" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.toolchain.value.workspace" valueType="string"/>
+							<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.nanoprintffloat.462557144" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.option.nanoprintffloat" value="true" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.targetplatform.2088548795" isAbstract="false" osList="all" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.targetplatform"/>
 							<builder buildPath="${workspace_loc:/БС-16_mod}/Debug" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.builder.1930989373" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" stopOnErr="false" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.builder"/>
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.925278272" name="MCU/MPU GCC Assembler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler">
@@ -152,11 +153,7 @@
 					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1582360117.1597425732" name="speex_util.h" rcbsApplicability="disable" resourcePath="util/speex_util.h" toolsToInvoke=""/>
 					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1582360117.1998417350" name="md5_util.h" rcbsApplicability="disable" resourcePath="util/md5_util.h" toolsToInvoke=""/>
 					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1582360117.1021178432" name="softuart_util.h" rcbsApplicability="disable" resourcePath="util/her/softuart_util.h" toolsToInvoke=""/>
-					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1582360117.747121026" name="softuart_util.c" rcbsApplicability="disable" resourcePath="util/her/softuart_util.c" toolsToInvoke="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.957596963.570139473">
-						<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.957596963.570139473" name="MCU/MPU GCC Compiler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.957596963">
-							<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.1190332016" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
-						</tool>
-					</fileInfo>
+					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1582360117.543268349" name="linebuf_util.h" rcbsApplicability="disable" resourcePath="util/her/linebuf_util.h" toolsToInvoke=""/>
 					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1582360117.774677528" name="startafter_util.h" rcbsApplicability="disable" resourcePath="util/startafter_util.h" toolsToInvoke=""/>
 					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1582360117.1972935594" name="pcm_util.obj" rcbsApplicability="disable" resourcePath="util/pcm_util.obj" toolsToInvoke=""/>
 					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1582360117.835834498" name="mad_util.h" rcbsApplicability="disable" resourcePath="util/mad_util.h" toolsToInvoke=""/>
@@ -169,7 +166,13 @@
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Middlewares"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="USB_Device"/>
-						<entry excluding="her/softuart_util.h|her/softuart_util.c|json_util.h|json_util.c|matrix_keyboard_util.h|matrix_keyboard_util.c|ogg_util.h|ogg_util.c|opus_util.h|opus_util.c|speex_util.c|md5_util.h|md5_util.c|speex_util.h" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="util"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="bq32000"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="fatfs"/>
+						<entry excluding="her/" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="libmad"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="pca9535"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="pca9635"/>
+						<entry excluding="her/linebuf_util.h|her/linebuf_util.c|her/softuart_util.h|her/softuart_util.c|json_util.h|json_util.c|matrix_keyboard_util.h|matrix_keyboard_util.c|ogg_util.h|ogg_util.c|opus_util.h|opus_util.c|speex_util.c|md5_util.h|md5_util.c|speex_util.h|dynbuf_util.c|dynbuf_util.h|dynbuf_util.obj|g711_util.c|g711_util.h|http_util.c|http_util.h|json_util.~c|json_util.~h|json_util.obj|law_util.c|law_util.h|modbus_master_util.c|modbus_master_util.h|modbus_master_util.obj|modbus_slave_util.c|modbus_slave_util.h|modbus_util.c|modbus_util.h|modbus_util.obj|net_util.c|net_util.h|net_util.obj|ogg_util.obj|oggopus_util.c|oggopus_util.h|opus_util.obj|rawopus_util.c|rawopus_util.h|wav_util.c|wav_util.h|wav_util.obj|wavplay_util.c|wavplay_util.h" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="util"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="w25qxx"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

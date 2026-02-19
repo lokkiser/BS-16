@@ -147,6 +147,13 @@ uint64_t HAL_DiffTickUs(uint64_t told, TIM_HandleTypeDef * htim)
 	return DIFF_TICKU64(told, tnew);
 }
 
+uint32_t HAL_DiffTick(uint32_t told)
+{
+	uint32_t tnew = HAL_GetTick();
+
+	return DIFF_TICKU32(told, tnew);
+}
+
 void HAL_DelayUs(uint64_t Delay, TIM_HandleTypeDef * htim)
 {
 	uint64_t tnew, told;

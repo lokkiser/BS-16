@@ -6,9 +6,9 @@
  */
 
 #include "mki.h"
-#include "pca9635.h"
 #include "pca9535.h"
-#include "stm_util.h"
+#include "pca9635.h"
+//#include "stm_util.h"
 #include "str_util.h"
 #include "fault.h"
 #include "mux.h"

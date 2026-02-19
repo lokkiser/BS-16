@@ -16,66 +16,6 @@
 static pca9535_t line_dd3, line_dd8;
 static uint16_t dd3_value = 0, dd8_value = 0;
 
-// -------------------------- OUT_ADC --------------------------
-//DD2
-//установить на мультиплексоре OUT_ADC 1...8
-/*
-void set_dd2(uint8_t value)
-{
-	PIN_WRITE(MUX_CTRL_1, GETBIT(value, 0));
-	PIN_WRITE(MUX_CTRL_2, GETBIT(value, 1));
-	PIN_WRITE(MUX_CTRL_3, GETBIT(value, 2));
-}
-
-//DD4
-//установить на мультиплексоре OUT_ADC 9...16
-void set_dd4(uint8_t value)
-{
-	PIN_WRITE(MUX_CTRL_4, GETBIT(value, 0));
-	PIN_WRITE(MUX_CTRL_5, GETBIT(value, 1));
-	PIN_WRITE(MUX_CTRL_6, GETBIT(value, 2));
-}
-*/
-
-/*
-//DD2 и DD4
-//установить на мультиплексорах OUT_ADC 1...16
-void set_out_adc(uint8_t out_adc1_adc16)
-{
-	if (out_adc1_adc16 > OUT_ADC8) set_dd4(out_adc1_adc16);
-	else set_dd2(out_adc1_adc16);
-}
-*/
-// -------------------------- P_OUT --------------------------
-/*
-//DD1
-//установить на мультиплексоре P_OUT 1...8
-void set_dd1(uint8_t value)
-{
-	PIN_WRITE(MUX_CTRL_7, GETBIT(value, 0));
-	PIN_WRITE(MUX_CTRL_8, GETBIT(value, 1));
-	PIN_WRITE(MUX_CTRL_9, GETBIT(value, 2));
-}
-
-//DD5
-//установить на мультиплексоре P_OUT 9...16
-void set_dd5(uint8_t value)
-{
-	PIN_WRITE(MUX_CTRL_10, GETBIT(value, 0));
-	PIN_WRITE(MUX_CTRL_11, GETBIT(value, 1));
-	PIN_WRITE(MUX_CTRL_12, GETBIT(value, 2));
-}
-*/
-/*
-//DD1 и DD6
-//установить на мультиплексорах P_OUT 1...16
-void set_p_out(uint8_t p_out_1_p_out_16)
-{
-	if (p_out_1_p_out_16 > P_OUT_8) set_dd5(p_out_1_p_out_16);
-	else set_dd1(p_out_1_p_out_16);
-}
-*/
-
 void set_adc_line(uint8_t num)
 {
 	PIN_WRITE(MCU_MUX_CTRL_1, (num & 0x01) ? 1 : 0);
@@ -212,7 +152,7 @@ void set_on_p(uint8_t on_p, i2c_mux_line_state_e state)
 	mki_set_led_color(on_p, on_p ? MKI_LED_COLOR_BLUE : color);
 }
 
-i2c_mux_line_state_e get_on_p_mod(uint8_t on_p)
+i2c_mux_line_state_e get_on_p(uint8_t on_p)
 {
     uint16_t res = (on_p <= 8) ? dd3_value : dd8_value;
     res >>= ((on_p-1)%8)*2;

@@ -226,8 +226,6 @@ uint32_t timers_get_tick(void)
 }
 
 
-#include "pca9635.h"
-
 //static uint8_t test_led_color = MKI_LED_COLOR_BLACK;
 //static uint8_t test_ld = 0;
 

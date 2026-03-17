@@ -266,7 +266,7 @@ void on_timer_1_sec(void)
   //mki_test();
 
 	if (fulog_buf[0] != '\0')
-  {
+    {
 		ulog(fulog_buf);
 		fulog_buf[0] = '\0';
 	}
@@ -338,27 +338,27 @@ int main(void)
   MX_TIM15_Init();
   /* USER CODE BEGIN 2 */
   __HAL_RCC_I2C1_CLK_ENABLE();
-    HAL_Delay(100);
-    __HAL_RCC_I2C1_FORCE_RESET();
-    HAL_Delay(100);
-    __HAL_RCC_I2C1_RELEASE_RESET();
-    HAL_Delay(100);
+  HAL_Delay(100);
+  __HAL_RCC_I2C1_FORCE_RESET();
+  HAL_Delay(100);
+  __HAL_RCC_I2C1_RELEASE_RESET();
+  HAL_Delay(100);
 
-    HAL_DAC_MspInit(&hdac1); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
-    HAL_DAC_MspInit(&hdac2); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
+  HAL_DAC_MspInit(&hdac1); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
+  HAL_DAC_MspInit(&hdac2); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
 
-    HAL_ADC_MspInit(&hadc1);
-    HAL_ADC_MspInit(&hadc2);
-    HAL_ADC_MspInit(&hadc5);
+  HAL_ADC_MspInit(&hadc1);
+  HAL_ADC_MspInit(&hadc2);
+  HAL_ADC_MspInit(&hadc5);
 
-    set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
-    HAL_TIM_Base_Start(&htim15);
+  set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
+  HAL_TIM_Base_Start(&htim15);
 
-    HAL_Delay(1000);
+  HAL_Delay(1000);
 
-    ulog("Start Trombon BC-16"CRLF);
-    //ulog_fmt("Version: %s"CRLF, VERSION);
-    ulog_fmt("Version: %s"CRLF, "1.0"); // TODO
+  ulog("Start Trombon BC-16"CRLF);
+  //ulog_fmt("Version: %s"CRLF, VERSION);
+  ulog_fmt("Version: %s"CRLF, "1.0"); // TODO
 
   /*
     HAL_I2C_StateTypeDef st;
@@ -388,91 +388,91 @@ int main(void)
     }
   */
 
-    mki_init();
-    mux_init();
-    console_init();
+  mki_init();
+  mux_init();
+  console_init();
 
-    fatfs_mount = false;
+  fatfs_mount = false;
 
-    if (flash_init())
+  if (flash_init())
+  {
+	  ulog("main: W25Q detected"CRLF);
+
+	  fatfs_mount = f_mount_cnt(&f_global_fatfs, 3);
+	  if (!fatfs_mount)  fatfs_mount = f_format_and_mount(&f_global_fatfs, F_MKFS_FMT_DEFAULT);
+	  ulog_fmt("main: FatFs f_mount() %s"CRLF, fatfs_mount ? "ok" : "error");
+  } 
+  else ulog("main: error W25Q not detected"CRLF);
+
+  if (fatfs_mount)
+  {
+	  if (f_exists(BC16_LOADER_FILE_NAME))
     {
-  	  ulog("main: W25Q detected"CRLF);
+		  ulog("Copy "BC16_LOADER_FILE_NAME" to stm32 flash base"CRLF);
+		  f_erase_and_copy_to_flash(BC16_LOADER_FILE_NAME, FLASH_BASE, BC16_FLASH_TYPE);
+		  ulog("Unlink "BC16_LOADER_FILE_NAME""CRLF);
+		  f_unlink(BC16_LOADER_FILE_NAME);
+	  }
+  }
+  else
+  {
+	  ulog("main: error mount FatFs"CRLF);
+	  set_fault(FAULT_HARDWARE_ERROR);
+  }
 
-  	  fatfs_mount = f_mount_cnt(&f_global_fatfs, 3);
-  	  if (!fatfs_mount)  fatfs_mount = f_format_and_mount(&f_global_fatfs, F_MKFS_FMT_DEFAULT);
-  	  ulog_fmt("main: FatFs f_mount() %s"CRLF, fatfs_mount ? "ok" : "error");
+  load_setting();
+  ulog_fmt("main: cfg "SETTING_KEY_MIC_VOLUME"=%d"CRLF, setting.mic_volume);
+  ulog_fmt("main: cfg "SETTING_KEY_SPK_VOLUME"=%d"CRLF, setting.mic_volume);
+  ulog_fmt("main: cfg "SETTING_KEY_DATE_TIME" =%s"CRLF, setting.date_time );
 
-    } else ulog("main: error W25Q not detected"CRLF);
+  if (HAL_I2C_IsDeviceReady(RTC_I2C_HANDLE, (RTC_I2C_ADDRESS << 1), 3, 1000) != HAL_OK)
+  {
+	  ulog_fmt("main: error bq32000 not ready"CRLF);
+	  set_fault(FAULT_HARDWARE_ERROR);
+  }
+  rtc_init();
+  //RTC_Time rtcTime;
+  //rtcTime.year = 24;
+  //rtcTime.hours  = 1;
+  //rtcTime.seconds = 23;
+  //rtcTime.month = 4;
+  //rtcTime.minutes =5;
+  //rtcTime.dayOfWeek =2;
+  //rtcTime.day =6;
+  //RTC_BQ32000_SetTime(&hi2c3, &rtcTime);
+  ulog_fmt("BQ32000: dattetime now %s"CRLF, rtc_read_datetime_str(true));
 
-    if (fatfs_mount)
-    {
-  	  if (f_exists(BC16_LOADER_FILE_NAME))
-      {
-  		  ulog("Copy "BC16_LOADER_FILE_NAME" to stm32 flash base"CRLF);
-  		  f_erase_and_copy_to_flash(BC16_LOADER_FILE_NAME, FLASH_BASE, BC16_FLASH_TYPE);
-  		  ulog("Unlink "BC16_LOADER_FILE_NAME""CRLF);
-  		  f_unlink(BC16_LOADER_FILE_NAME);
-  	  }
-    }
-    else
-    {
-  	  ulog("main: error mount FatFs"CRLF);
-  	  set_fault(FAULT_HARDWARE_ERROR);
-    }
+  if (strlen(setting.date_time))
+  {
+	  rtc_set_datetime_str(setting.date_time);
+	  memset(setting.date_time, 0, sizeof(setting.date_time));
+	  save_setting();
+  }
+  else if ( ((globalRTC_Time.year < 26) || (globalRTC_Time.year > 40)) ||
+		  !MONTH_GOD(globalRTC_Time.month) ||
+		  !DATE_GOD(globalRTC_Time.day) ||
+		  !HOUR_GOD(globalRTC_Time.hours) ||
+		  !MINUTE_GOD(globalRTC_Time.minutes) ||
+		  !SECOND_GOD(globalRTC_Time.seconds) )
+  {
+	  rtc_set_datetime_str("2026-01-19T10:16:01");
+  }
 
-    load_setting();
-    ulog_fmt("main: cfg "SETTING_KEY_MIC_VOLUME"=%d"CRLF, setting.mic_volume);
-    ulog_fmt("main: cfg "SETTING_KEY_SPK_VOLUME"=%d"CRLF, setting.mic_volume);
-    ulog_fmt("main: cfg "SETTING_KEY_DATE_TIME" =%s"CRLF, setting.date_time );
+  akb_init();
+  ctrl_init();
 
-    if (HAL_I2C_IsDeviceReady(RTC_I2C_HANDLE, (RTC_I2C_ADDRESS << 1), 3, 1000) != HAL_OK)
-    {
-  	  ulog_fmt("main: error bq32000 not ready"CRLF);
-  	  set_fault(FAULT_HARDWARE_ERROR);
-    }
-    rtc_init();
-    //RTC_Time rtcTime;
-    //rtcTime.year = 24;
-    //rtcTime.hours  = 1;
-    //rtcTime.seconds = 23;
-    //rtcTime.month = 4;
-    //rtcTime.minutes =5;
-    //rtcTime.dayOfWeek =2;
-    //rtcTime.day =6;
-    //RTC_BQ32000_SetTime(&hi2c3, &rtcTime);
-    ulog_fmt("BQ32000: dattetime now %s"CRLF, rtc_read_datetime_str(true));
+  timers_add(on_timer_10_msec, 10);
+  timers_add(on_timer_50_msec, 50);
+  timers_add(on_timer_250_msec, 250);
+  timers_add(on_timer_1_sec, 1000);
+  timers_add(on_timer_1_min, 60000);
 
-    if (strlen(setting.date_time))
-    {
-  	  rtc_set_datetime_str(setting.date_time);
-  	  memset(setting.date_time, 0, sizeof(setting.date_time));
-  	  save_setting();
-    }
-    else if ( ((globalRTC_Time.year < 26) || (globalRTC_Time.year > 40)) ||
-  		  !MONTH_GOD(globalRTC_Time.month) ||
-  		  !DATE_GOD(globalRTC_Time.day) ||
-  		  !HOUR_GOD(globalRTC_Time.hours) ||
-  		  !MINUTE_GOD(globalRTC_Time.minutes) ||
-  		  !SECOND_GOD(globalRTC_Time.seconds) )
-    {
-  	  rtc_set_datetime_str("2026-01-19T10:16:01");
-    }
+  filelog("Перезагрузка"CRLF);
 
-    akb_init();
-    ctrl_init();
+  memplay_init(sound_buf, sizeof(sound_buf));
+  memplay(start_sound, sizeof(start_sound), &spk_dacplay_data, setting.spk_volume, &htim15);
 
-    timers_add(on_timer_10_msec, 10);
-    timers_add(on_timer_50_msec, 50);
-    timers_add(on_timer_250_msec, 250);
-    timers_add(on_timer_1_sec, 1000);
-    timers_add(on_timer_1_min, 60000);
-
-    filelog("Перезагрузка"CRLF);
-
-    memplay_init(sound_buf, sizeof(sound_buf));
-    memplay(start_sound, sizeof(start_sound), &spk_dacplay_data, setting.spk_volume, &htim15);
-
-    ulog("BC-16 goto loop"CRLF);
+  ulog("BC-16 goto loop"CRLF);
   /* USER CODE END 2 */
 
   /* Infinite loop */

@@ -17,9 +17,8 @@ static char __rtc_read_datetime_str[22];
 
 void rtc_init(void)
 {
-	  RTC_BQ32000_Init(RTC_I2C_HANDLE);
+	RTC_BQ32000_Init(RTC_I2C_HANDLE);
 }
-
 
 // RTC_Time в стринг
 void rtcdatetime2str(RTC_Time* rtcTim, char* buf, uint16_t buf_size, bool with_second)
@@ -66,7 +65,6 @@ char* rtc_read_datetime_str(bool with_second)
 {
 	RTC_Time rtcTime;
 
-
     RTC_BQ32000_ReadTime(RTC_I2C_HANDLE, &rtcTime);
 
     rtcdatetime2str(&rtcTime, __rtc_read_datetime_str, sizeof(__rtc_read_datetime_str), with_second);
@@ -101,7 +99,6 @@ void rtctime2str(RTC_Time* rtcTim, char* buf, uint16_t buf_size, bool with_secon
 char* rtc_read_time_str(bool with_second)
 {
 	RTC_Time rtcTime;
-
 
     RTC_BQ32000_ReadTime(RTC_I2C_HANDLE, &rtcTime);
 

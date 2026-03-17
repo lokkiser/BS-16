@@ -40,8 +40,6 @@ void set_adc_line(uint8_t num)
 } 
 
 // -------------------------- ON_P_MIC ON_P_SPK --------------------------
-
-
 //установить на мс DD3 код value
 void set_dd3(uint16_t value)
 {

@@ -60,7 +60,6 @@ float ctrl_adc_to_voltage(uint16_t value)
 	return 3.3f * (float)value / 4095.0f;
 }
 
-
 //EXT_SPK_I
 //Контролируем ток (средняя точка и от неё выше-нише) через усилитель (амплитуда) можем вычитывать через АЦП.
 float get_ext_spk_i(void)
@@ -223,13 +222,13 @@ void ctrl_task(void)
 	status = HAL_ADC_Start_DMA(&hadc1, (uint32_t*)ctrl_adc1_dma, 2);
 	if (status != HAL_OK) 
 	{
-		ulog_fmt("ctrl: error invalid start dma 2 status = %d"CRLF, status);
+		ulog_fmt("ctrl: error invalid start dma adc1 status = %d"CRLF, status);
 	}
 
 	status = HAL_ADC_Start_DMA(&hadc2, (uint32_t*)ctrl_adc2_dma, 1);
 	if (status != HAL_OK) 
 	{
-		ulog_fmt("ctrl: error invalid start dma 3 status = %d"CRLF, status);
+		ulog_fmt("ctrl: error invalid start dma adc2 status = %d"CRLF, status);
 	}
 }
 

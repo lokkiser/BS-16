@@ -12,8 +12,8 @@ void PCA9635_write_reg(pca9635_t* pca9635, uint8_t reg, uint8_t data)
 
 void pca9635_set_ldr(pca9635_t* pca9635, uint8_t ldr, uint8_t value)
 {
-
-	switch (ldr) {
+	switch (ldr) 
+	{
 		case  PCA9635_LDR0:
 			pca9635->ldrs_data[0] = ( (pca9635->ldrs_data[0] & 0xFC) | value );
 		break;
@@ -62,6 +62,7 @@ void pca9635_set_ldr(pca9635_t* pca9635, uint8_t ldr, uint8_t value)
 		case  PCA9635_LDR15:
 			pca9635->ldrs_data[3] = ( (pca9635->ldrs_data[3] & 0x3F) | (value << 6) );
 		break;
+		
 		default: break;
 	}
 }
@@ -79,16 +80,20 @@ void pca9635_send_ldr(pca9635_t* pca9635, uint8_t ldr, uint8_t ldr_value)
 	uint8_t reg_ledout;
 
 	pca9635_set_ldr(pca9635, ldr, ldr_value);
-	if (ldr < PCA9635_LDR4) {
+	if (ldr < PCA9635_LDR4) 
+	{
 		reg_ledout = PCA9635_REG_LEDOUT0;
 	}
-	else if (ldr < PCA9635_LDR8) {
+	else if (ldr < PCA9635_LDR8) 
+	{
 		reg_ledout = PCA9635_REG_LEDOUT1;
 	}
-	else if (ldr < PCA9635_LDR12) {
+	else if (ldr < PCA9635_LDR12) 
+	{
 		reg_ledout = PCA9635_REG_LEDOUT2;
 	}
-	else {
+	else 
+	{
 		reg_ledout = PCA9635_REG_LEDOUT3;
 	}
 
@@ -124,8 +129,6 @@ void pca9635_reset(pca9635_t* pca9635)
 }
 
 
-
-
 void PCA9635_write_registers (I2C_HandleTypeDef* hi2c, uint16_t address, uint8_t reg, uint8_t data)
 {
 	uint8_t tx[2] = { reg, data };
@@ -141,7 +144,8 @@ void PCA9635_write_all_pwm (I2C_HandleTypeDef* hi2c, uint16_t address, uint8_t* 
 	tx[0] = PCA9635_REG_PWM0 | 0x80; //go to register and enable auto incriment
 
 	//copy pwm array to twm buffer
-	for(uint8_t i = 0; i < pwm_buffer_size; i++ ){
+	for(uint8_t i = 0; i < pwm_buffer_size; i++ )
+	{
 		tx[1 + i] = pwm_buffer[i];
 	}
 
@@ -152,7 +156,6 @@ void PCA9635_write_all_pwm (I2C_HandleTypeDef* hi2c, uint16_t address, uint8_t* 
 //(addres, bool sleep mode, bool allcall, bool dmblnk, bool invrt, bool och, bool outdrv, outne can 0-2)
 void PCA9635_init(I2C_HandleTypeDef* hi2c, uint16_t address, uint8_t lpower, uint8_t allcall, uint8_t dmblnk, uint8_t invrt, uint8_t och, uint8_t outdrv, uint8_t outne)
 {
-
 	uint8_t tx[5];
 
 	tx[0] = PCA9635_REG_MODE1 | 0x80; // go to register and enable auto incriment
@@ -171,7 +174,6 @@ void PCA9635_init(I2C_HandleTypeDef* hi2c, uint16_t address, uint8_t lpower, uin
 	tx[4] = 0xff;
 
 	HAL_I2C_Master_Transmit(hi2c, address, tx, 4, HAL_MAX_DELAY);
-
 }
 
 

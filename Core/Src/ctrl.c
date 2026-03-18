@@ -121,8 +121,8 @@ void ctrl_task(void)
 
 	line_state = get_ctrl_out_adc_line_state(ctrl_index);
 	color = line_state_to_color(line_state);
-	if (mki_get_led_color(ctrl_index) != color) 
-		mki_set_led_color(ctrl_index, 	 color);
+	if (mki_get_led_color(ctrl_index+1) != color) 
+		mki_set_led_color(ctrl_index+1,    color);
 
 	if (line_state == LINE_STATE_BUTTON_PRESS) 
 	{

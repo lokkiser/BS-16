@@ -266,7 +266,7 @@ void mki_task(void)
 			else CLRBIT(key, 15 - i);
 		}
 	*/
-		for (uint8_t i = 0; i < 17; i++) 
+		for (uint8_t i = 0; i < 16; i++) 
 		{
 			if (!GETBIT(mki_keys[0], i) && GETBIT(key, i)) 
 			{
@@ -364,9 +364,9 @@ void mki_init(void)
 	//PCA9635_init(MKI_I2C_HANDLE, MKI_DD4_ADDERESS << 1, 0, 0, 0, 0, 0, 0, 0);
 
 	HAL_Delay(1);
-	PCA9635_write_reg(&led_dd1, PCA9635_REG_MODE1, 0);
+	PCA9635_write_reg(&led_dd1,  PCA9635_REG_MODE1, 0);
 	HAL_Delay(1);
-	PCA9635_write_reg(&led_dd1, PCA9635_REG_MODE2, 0);
+	PCA9635_write_reg(&led_dd1,  PCA9635_REG_MODE2, 0);
 	HAL_Delay(1);
 	pca9635_send_ledout(&led_dd1, PCA9635_REG_LEDOUT0);
 	HAL_Delay(1);
@@ -379,9 +379,9 @@ void mki_init(void)
 
 
 	HAL_Delay(1);
-	PCA9635_write_reg(&led_dd2, PCA9635_REG_MODE1, 0);
+	PCA9635_write_reg(&led_dd2,  PCA9635_REG_MODE1, 0);
 	HAL_Delay(1);
-	PCA9635_write_reg(&led_dd2, PCA9635_REG_MODE2, 0);
+	PCA9635_write_reg(&led_dd2,  PCA9635_REG_MODE2, 0);
 	HAL_Delay(1);
 	pca9635_send_ledout(&led_dd2, PCA9635_REG_LEDOUT0);
 	HAL_Delay(1);
@@ -393,9 +393,9 @@ void mki_init(void)
 
 
 	HAL_Delay(1);
-	PCA9635_write_reg(&led_dd3, PCA9635_REG_MODE1, 0);
+	PCA9635_write_reg(&led_dd3,  PCA9635_REG_MODE1, 0);
 	HAL_Delay(1);
-	PCA9635_write_reg(&led_dd3, PCA9635_REG_MODE2, 0);
+	PCA9635_write_reg(&led_dd3,  PCA9635_REG_MODE2, 0);
 	HAL_Delay(1);
 	pca9635_send_ledout(&led_dd3, PCA9635_REG_LEDOUT0);
 	HAL_Delay(1);
@@ -406,9 +406,9 @@ void mki_init(void)
 	pca9635_send_ledout(&led_dd3, PCA9635_REG_LEDOUT3);
 
 	HAL_Delay(1);
-	PCA9635_write_reg(&led_dd4, PCA9635_REG_MODE1, 0);
+	PCA9635_write_reg(&led_dd4,  PCA9635_REG_MODE1, 0);
 	HAL_Delay(1);
-	PCA9635_write_reg(&led_dd4, PCA9635_REG_MODE2, 0);
+	PCA9635_write_reg(&led_dd4,  PCA9635_REG_MODE2, 0);
 	HAL_Delay(1);
 	pca9635_send_ledout(&led_dd4, PCA9635_REG_LEDOUT0);
 	HAL_Delay(1);

@@ -131,7 +131,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		dd5_change_tick = HAL_GetTickNoZero();
 	}
 	else if (GPIO_Pin == INT2_Pin)
-  	{
+	{
 		dd6_change_tick = HAL_GetTickNoZero();
 	}
 }
@@ -266,7 +266,7 @@ void on_timer_1_sec(void)
   //mki_test();
 
 	if (fulog_buf[0] != '\0')
-    {
+  {
 		ulog(fulog_buf);
 		fulog_buf[0] = '\0';
 	}
@@ -1450,6 +1450,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

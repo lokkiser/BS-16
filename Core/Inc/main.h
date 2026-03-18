@@ -116,12 +116,15 @@ void Error_Handler(void);
 #define mute_OP_GPIO_Port GPIOB
 #define INT1_Pin GPIO_PIN_8
 #define INT1_GPIO_Port GPIOD
+#define INT1_EXTI_IRQn EXTI9_5_IRQn
 #define INT2_Pin GPIO_PIN_9
 #define INT2_GPIO_Port GPIOD
+#define INT2_EXTI_IRQn EXTI9_5_IRQn
 #define MCU_ADC5_1_Pin GPIO_PIN_8
 #define MCU_ADC5_1_GPIO_Port GPIOA
 #define CLK_IRQ_Pin GPIO_PIN_11
 #define CLK_IRQ_GPIO_Port GPIOC
+#define CLK_IRQ_EXTI_IRQn EXTI15_10_IRQn
 #define FREE_GPIO_1_Pin GPIO_PIN_0
 #define FREE_GPIO_1_GPIO_Port GPIOD
 #define FREE_GPIO_2_Pin GPIO_PIN_1

@@ -14,7 +14,7 @@
 #define MKI_DD1_ADDERESS	(0x00)
 #define MKI_DD2_ADDERESS	(0x01)
 #define MKI_DD3_ADDERESS	(0x02)
-#define MKI_DD4_ADDERESS	(0x03)
+#define MKI_DD4_ADDERESS	(0x07)
 #define MKI_DD5_ADDERESS	(0x20)
 #define MKI_DD6_ADDERESS	(0x21)
 

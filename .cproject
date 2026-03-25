@@ -202,4 +202,5 @@
 			<resource resourceType="PROJECT" workspacePath="/BS-16_mod"/>
 		</configuration>
 	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

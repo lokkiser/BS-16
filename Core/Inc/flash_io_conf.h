@@ -8,7 +8,7 @@
 #ifndef CORE_INC_FLASH_IO_CONF_H_
 #define CORE_INC_FLASH_IO_CONF_H_
 
-#define FLASH_SPI_HANDLE 			hspi1
+#define FLASH_SPI_HANDLE            hspi1
 #define FLASH_CS_GPIO               FLASH_CS_GPIO_Port
 #define FLASH_CS_PIN                FLASH_CS_Pin
 

@@ -125,15 +125,15 @@ bool fatfs_mount = false;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	//fulog_fmt("i%d"CRLF, GPIO_Pin);
-	if (GPIO_Pin == INT1_Pin)
-	{
-		dd5_change_tick = HAL_GetTickNoZero();
-	}
-	else if (GPIO_Pin == INT2_Pin)
-	{
-		dd6_change_tick = HAL_GetTickNoZero();
-	}
+    //fulog_fmt("i%d"CRLF, GPIO_Pin);
+    if (GPIO_Pin == INT1_Pin)
+    {
+        dd5_change_tick = HAL_GetTickNoZero();
+    }
+    else if (GPIO_Pin == INT2_Pin)
+    {
+        dd6_change_tick = HAL_GetTickNoZero();
+    }
 }
 
 void UART_flush(UART_HandleTypeDef *huart)
@@ -161,59 +161,59 @@ void UART_flush(UART_HandleTypeDef *huart)
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-	UART_flush(huart);
+    UART_flush(huart);
 }
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
-	if (huart == CONSOLE_UART)
-  {
-		console_RxEventCallback(Size);
-	}
+    if (huart == CONSOLE_UART)
+    {
+        console_RxEventCallback(Size);
+    }
 }
 
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 {
-	if (hadc == LOCAL_MIC_ADC_HANDLE)
-  {
-		local_mic_adc_HalfCpltCallback();
-	}
+    if (hadc == LOCAL_MIC_ADC_HANDLE)
+    {
+        local_mic_adc_HalfCpltCallback();
+    }
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
-	if (hadc == LOCAL_MIC_ADC_HANDLE)
-  {
-		local_mic_adc_FullCpltCallback();
-	}
-	else
-  {
-		ctrl_FullCpltCallback(hadc);
-	}
+    if (hadc == LOCAL_MIC_ADC_HANDLE)
+    {
+        local_mic_adc_FullCpltCallback();
+    }
+    else
+    {
+        ctrl_FullCpltCallback(hadc);
+    }
 }
 
 void HAL_DAC_ConvHalfCpltCallbackCh1(DAC_HandleTypeDef *hdac)
 {
-	if (hdac == LOCAL_MIC_DAC_HANDLE)
-  {
-		local_mic_dac_HalfCpltCallback();
-	}
-	else if (hdac == LOCAL_SPK_DAC_HANDLE)
-  {
-		local_spk_dac_HalfCpltCallback();
-	}
+    if (hdac == LOCAL_MIC_DAC_HANDLE)
+    {
+        local_mic_dac_HalfCpltCallback();
+    }
+    else if (hdac == LOCAL_SPK_DAC_HANDLE)
+    {
+        local_spk_dac_HalfCpltCallback();
+    }
 }
 
 void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef *hdac)
 {
-	if (hdac == LOCAL_MIC_DAC_HANDLE)
-  {
-		local_mic_dac_FullCpltCallback();
-	}
-	else if (hdac == LOCAL_SPK_DAC_HANDLE)
-  {
-		local_spk_dac_FullCpltCallback();
-	}
+    if (hdac == LOCAL_MIC_DAC_HANDLE)
+    {
+        local_mic_dac_FullCpltCallback();
+    }
+    else if (hdac == LOCAL_SPK_DAC_HANDLE)
+    {
+        local_spk_dac_FullCpltCallback();
+    }
 }
 
 void HAL_DAC_ErrorCallbackCh1(DAC_HandleTypeDef *hdac)
@@ -222,7 +222,7 @@ void HAL_DAC_ErrorCallbackCh1(DAC_HandleTypeDef *hdac)
 
 uint32_t timers_get_tick(void)
 {
-	return HAL_GetTick();
+    return HAL_GetTick();
 }
 
 void on_timer_10_msec(void)
@@ -231,43 +231,43 @@ void on_timer_10_msec(void)
 
 void on_timer_50_msec(void)
 {
-	mki_task();
-	memplay_task();
+    mki_task();
+    ctrl_task();
+    memplay_task();
 }
 
 void on_timer_250_msec(void)
 {
-	console_task();
-	ctrl_task();
+    console_task();
 }
 
 void on_timer_1_sec(void)
 {
-	HAL_IWDG_Refresh(&hiwdg);
+    HAL_IWDG_Refresh(&hiwdg);
 
-	if (fulog_buf[0] != '\0')
-  {
-		ulog(fulog_buf);
-		fulog_buf[0] = '\0';
-	}
+    if (fulog_buf[0] != '\0')
+    {
+        ulog(fulog_buf);
+        fulog_buf[0] = '\0';
+    }
 }
 
 void on_timer_1_min(void)
 {
-	akb_task();
+    akb_task();
 }
 
 //file log
 void filelog(char * str)
 {
-	char buf[MAX_STR_SIZE];
+    char buf[MAX_STR_SIZE];
 
-	strcpy_s(buf, sizeof(buf), rtc_read_datetime_str(true));
-	strcat_s(buf, sizeof(buf), " ");
-	strcat_s(buf, sizeof(buf), str);
-	//strcat_s(buf, sizeof(buf), CRLF);
+    strcpy_s(buf, sizeof(buf), rtc_read_datetime_str(true));
+    strcat_s(buf, sizeof(buf), " ");
+    strcat_s(buf, sizeof(buf), str);
+    //strcat_s(buf, sizeof(buf), CRLF);
 
-	logfile_add(buf);
+    logfile_add(buf);
 }
 /* USER CODE END 0 */
 
@@ -314,6 +314,7 @@ int main(void)
   MX_ADC4_Init();
   MX_SPI1_Init();
   MX_TIM15_Init();
+
   /* USER CODE BEGIN 2 */
   __HAL_RCC_I2C1_CLK_ENABLE();
   HAL_Delay(100);
@@ -349,28 +350,28 @@ int main(void)
 
   if (flash_init())
   {
-	  ulog("main: W25Q detected"CRLF);
+      ulog("main: W25Q detected"CRLF);
 
-	  fatfs_mount = f_mount_cnt(&f_global_fatfs, 3);
-	  if (!fatfs_mount)  fatfs_mount = f_format_and_mount(&f_global_fatfs, F_MKFS_FMT_DEFAULT);
-	  ulog_fmt("main: FatFs f_mount() %s"CRLF, fatfs_mount ? "ok" : "error");
+      fatfs_mount = f_mount_cnt(&f_global_fatfs, 3);
+      if (!fatfs_mount)  fatfs_mount = f_format_and_mount(&f_global_fatfs, F_MKFS_FMT_DEFAULT);
+      ulog_fmt("main: FatFs f_mount() %s"CRLF, fatfs_mount ? "ok" : "error");
   } 
   else ulog("main: error W25Q not detected"CRLF);
 
   if (fatfs_mount)
   {
-	  if (f_exists(BC16_LOADER_FILE_NAME))
-    {
-		  ulog("Copy "BC16_LOADER_FILE_NAME" to stm32 flash base"CRLF);
-		  f_erase_and_copy_to_flash(BC16_LOADER_FILE_NAME, FLASH_BASE, BC16_FLASH_TYPE);
-		  ulog("Unlink "BC16_LOADER_FILE_NAME""CRLF);
-		  f_unlink(BC16_LOADER_FILE_NAME);
-	  }
+      if (f_exists(BC16_LOADER_FILE_NAME))
+      {
+          ulog("Copy "BC16_LOADER_FILE_NAME" to stm32 flash base"CRLF);
+          f_erase_and_copy_to_flash(BC16_LOADER_FILE_NAME, FLASH_BASE, BC16_FLASH_TYPE);
+          ulog("Unlink "BC16_LOADER_FILE_NAME""CRLF);
+          f_unlink(BC16_LOADER_FILE_NAME);
+      }
   }
   else
   {
-	  ulog("main: error mount FatFs"CRLF);
-	  set_fault(FAULT_HARDWARE_ERROR);
+      ulog("main: error mount FatFs"CRLF);
+      set_fault(FAULT_HARDWARE_ERROR);
   }
 
   load_setting();
@@ -380,8 +381,8 @@ int main(void)
 
   if (HAL_I2C_IsDeviceReady(RTC_I2C_HANDLE, (RTC_I2C_ADDRESS << 1), 3, 1000) != HAL_OK)
   {
-	  ulog_fmt("main: error bq32000 not ready"CRLF);
-	  set_fault(FAULT_HARDWARE_ERROR);
+      ulog_fmt("main: error bq32000 not ready"CRLF);
+      set_fault(FAULT_HARDWARE_ERROR);
   }
   rtc_init();
   //RTC_Time rtcTime;
@@ -397,28 +398,28 @@ int main(void)
 
   if (strlen(setting.date_time))
   {
-	  rtc_set_datetime_str(setting.date_time);
-	  memset(setting.date_time, 0, sizeof(setting.date_time));
-	  save_setting();
+      rtc_set_datetime_str(setting.date_time);
+      memset(setting.date_time, 0, sizeof(setting.date_time));
+      save_setting();
   }
   else if ( ((globalRTC_Time.year < 26) || (globalRTC_Time.year > 40)) ||
-		  !MONTH_GOD(globalRTC_Time.month) ||
-		  !DATE_GOD(globalRTC_Time.day) ||
-		  !HOUR_GOD(globalRTC_Time.hours) ||
-		  !MINUTE_GOD(globalRTC_Time.minutes) ||
-		  !SECOND_GOD(globalRTC_Time.seconds) )
+          !MONTH_GOD(globalRTC_Time.month) ||
+          !DATE_GOD(globalRTC_Time.day) ||
+          !HOUR_GOD(globalRTC_Time.hours) ||
+          !MINUTE_GOD(globalRTC_Time.minutes) ||
+          !SECOND_GOD(globalRTC_Time.seconds) )
   {
-	  rtc_set_datetime_str("2026-01-19T10:16:01");
+      rtc_set_datetime_str("2026-01-19T10:16:01");
   }
 
   akb_init();
   ctrl_init();
 
-  timers_add(on_timer_10_msec, 10);
-  timers_add(on_timer_50_msec, 50);
+  timers_add(on_timer_10_msec,  10);
+  timers_add(on_timer_50_msec,  50);
   timers_add(on_timer_250_msec, 250);
-  timers_add(on_timer_1_sec, 1000);
-  timers_add(on_timer_1_min, 60000);
+  timers_add(on_timer_1_sec,    1000);
+  timers_add(on_timer_1_min,    60000);
 
   filelog("Перезагрузка"CRLF);
 
@@ -435,7 +436,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  timers_task();
+      timers_task();
   }
   /* USER CODE END 3 */
 }
@@ -520,7 +521,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.GainCompensation = 0;
   hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.NbrOfConversion = 2;
@@ -749,8 +750,8 @@ static void MX_ADC4_Init(void)
   hadc4.Init.ContinuousConvMode = DISABLE;
   hadc4.Init.NbrOfConversion = 1;
   hadc4.Init.DiscontinuousConvMode = DISABLE;
-  hadc4.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc4.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc4.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T15_TRGO;
+  hadc4.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
   hadc4.Init.DMAContinuousRequests = DISABLE;
   hadc4.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc4.Init.OversamplingMode = DISABLE;
@@ -763,7 +764,7 @@ static void MX_ADC4_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_3;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_92CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -808,8 +809,8 @@ static void MX_ADC5_Init(void)
   hadc5.Init.ContinuousConvMode = DISABLE;
   hadc5.Init.NbrOfConversion = 1;
   hadc5.Init.DiscontinuousConvMode = DISABLE;
-  hadc5.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc5.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc5.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T15_TRGO;
+  hadc5.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
   hadc5.Init.DMAContinuousRequests = DISABLE;
   hadc5.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc5.Init.OversamplingMode = DISABLE;
@@ -822,7 +823,7 @@ static void MX_ADC5_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_92CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -880,7 +881,6 @@ static void MX_DAC1_Init(void)
 
   /** DAC channel OUT2 config
   */
-  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
   if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
@@ -1338,8 +1338,11 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, MCU_MUX_CTRL_3_Pin|MCU_MUX_CTRL_4_Pin|MCU_MUX_CTRL_5_Pin|Avar_Pin
-                          |Start_Pin|VIZ_Pin|MCU_MUX_CTRL_1_Pin|MCU_MUX_CTRL_2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, MCU_MUX_CTRL_3_Pin|Avar_Pin|Start_Pin|VIZ_Pin
+                          |MCU_MUX_CTRL_1_Pin|MCU_MUX_CTRL_2_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, MCU_MUX_CTRL_4_Pin|MCU_MUX_CTRL_5_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(MPPT_OFF_GPIO_Port, MPPT_OFF_Pin, GPIO_PIN_RESET);

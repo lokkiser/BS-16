@@ -11,7 +11,7 @@
 #include "stm_util.h"
 
 dacplay_data_t spk_dacplay_data = DACPLAY_STATIC_INIT(11, LOCAL_SPK_DAC_HANDLE, LOCAL_SPK_DAC_CHANNEL);
-adcplay_data_t spk_adcplay_data = ADCPLAY_STATIC_INIT( 2, LOCAL_SPK_ADC_HANDLE);
+adcplay_data_t spk_adcplay_data = ADCPLAY_STATIC_INIT( 3, LOCAL_SPK_ADC_HANDLE);
 
 
 uint8_t sound_buf[SOUND_BUF_SIZE];
@@ -21,7 +21,6 @@ void memplay_on_stop(void)
 	ulog("spk: memplay_on_stop"CRLF);
     set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
 	HAL_TIM_Base_Start(&htim15);
-
 }
 
 
@@ -36,7 +35,6 @@ void adcplay_write_data(adcplay_data_t * adcplay_data, uint16_t * adc_data)
 		}
 	}
 }
-
 
 
 void local_spk_dac_HalfCpltCallback(void)
@@ -88,4 +86,3 @@ bool local_spk_start(void)
 	}
 	return res;
 }
-

@@ -166,7 +166,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
-	if (huart == CONSOLE_UART )
+	if (huart == CONSOLE_UART)
   {
 		console_RxEventCallback(Size);
 	}
@@ -174,7 +174,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 {
-	if (hadc ==  LOCAL_MIC_ADC_HANDLE)
+	if (hadc == LOCAL_MIC_ADC_HANDLE)
   {
 		local_mic_adc_HalfCpltCallback();
 	}
@@ -182,7 +182,7 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
-	if (hadc ==  LOCAL_MIC_ADC_HANDLE)
+	if (hadc == LOCAL_MIC_ADC_HANDLE)
   {
 		local_mic_adc_FullCpltCallback();
 	}
@@ -225,10 +225,6 @@ uint32_t timers_get_tick(void)
 	return HAL_GetTick();
 }
 
-
-//static uint8_t test_led_color = MKI_LED_COLOR_BLACK;
-//static uint8_t test_ld = 0;
-
 void on_timer_10_msec(void)
 {
 }
@@ -243,27 +239,11 @@ void on_timer_250_msec(void)
 {
 	console_task();
 	ctrl_task();
-
-	//PCA9635_write_registers(MKI_I2C_HANDLE, MKI_DD1_ADDERESS, PCA9635_REG_LEDOUT1, test_ld);
-	//test_ld++;
 }
 
 void on_timer_1_sec(void)
 {
 	HAL_IWDG_Refresh(&hiwdg);
-
-/*
-	for (uint8_t i = MKI_LED_1;i <= MKI_LED_START; i++)
-  {
-		mki_set_led_color(i, test_led_color);
-	}
-	test_led_color++;
-	if (test_led_color > MKI_LED_COLOR_WHITE) test_led_color = MKI_LED_COLOR_BLACK;
-
-	PIN_TOGGLE(P220_OUT);
-*/
-
-  //mki_test();
 
 	if (fulog_buf[0] != '\0')
   {
@@ -272,12 +252,10 @@ void on_timer_1_sec(void)
 	}
 }
 
-
 void on_timer_1_min(void)
 {
 	akb_task();
 }
-
 
 //file log
 void filelog(char * str)
@@ -347,46 +325,21 @@ int main(void)
   HAL_DAC_MspInit(&hdac1); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
   HAL_DAC_MspInit(&hdac2); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
 
-  HAL_ADC_MspInit(&hadc1);
-  HAL_ADC_MspInit(&hadc2);
-  HAL_ADC_MspInit(&hadc5);
+  // HAL_ADC_MspInit(&hadc1);
+  // HAL_ADC_MspInit(&hadc2);
+  // HAL_ADC_MspInit(&hadc5);
+
+  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
+  HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
 
   set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
-  HAL_TIM_Base_Start(&htim15);
+  //HAL_TIM_Base_Start(&htim15);
 
   HAL_Delay(1000);
 
-  ulog("Start Trombon BC-16"CRLF);
+  ulog(CRLF"Start Trombon BC-16"CRLF);
   //ulog_fmt("Version: %s"CRLF, VERSION);
   ulog_fmt("Version: %s"CRLF, "1.0"); // TODO
-
-  /*
-    HAL_I2C_StateTypeDef st;
-    st = HAL_I2C_GetState(MKI_I2C_HANDLE);
-    ulog_fmt("hi2c4 state %d"CRLF, st);
-    st = HAL_I2C_GetState(&hi2c3);
-    ulog_fmt("hi2c3 state %d"CRLF, st);
-
-    for (int i = 0; i < 127; ++i)
-    {
-  	  HAL_IWDG_Refresh(&hiwdg);
-  	  ulog_fmt("Scan hi2c4 %d"CRLF, i);
-  	  if (HAL_I2C_IsDeviceReady(&hi2c4, i << 1, 3, 1000) == HAL_OK)
-      {
-  		  ulog_fmt("Detect hi2c4 %d"CRLF, i);
-  	  }
-    }
-
-    for (i = 0; i < 127; ++i)
-    {
-  	  HAL_IWDG_Refresh(&hiwdg);
-  	  ulog_fmt("Scan hi2c3 %d"CRLF, i);
-  	  if  (HAL_I2C_IsDeviceReady(&hi2c3, i << 1, 3, 1000) == HAL_OK)
-      {
-  		  ulog_fmt("Detect hi2c3 %d"CRLF, i);
-  	  }
-    }
-  */
 
   mki_init();
   mux_init();
@@ -629,8 +582,8 @@ static void MX_ADC2_Init(void)
 
   /* USER CODE END ADC2_Init 0 */
 
-  ADC_ChannelConfTypeDef sConfig = {0};
   ADC_InjectionConfTypeDef sConfigInjected = {0};
+  ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC2_Init 1 */
 
@@ -649,25 +602,12 @@ static void MX_ADC2_Init(void)
   hadc2.Init.ContinuousConvMode = DISABLE;
   hadc2.Init.NbrOfConversion = 1;
   hadc2.Init.DiscontinuousConvMode = DISABLE;
-  hadc2.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T15_TRGO;
-  hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
+  hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc2.Init.DMAContinuousRequests = DISABLE;
   hadc2.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc2.Init.OversamplingMode = DISABLE;
   if (HAL_ADC_Init(&hadc2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_2;
-  sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_92CYCLES_5;
-  sConfig.SingleDiff = ADC_SINGLE_ENDED;
-  sConfig.OffsetNumber = ADC_OFFSET_NONE;
-  sConfig.Offset = 0;
-  if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
@@ -688,6 +628,19 @@ static void MX_ADC2_Init(void)
   sConfigInjected.ExternalTrigInjecConvEdge = ADC_EXTERNALTRIGINJECCONV_EDGE_NONE;
   sConfigInjected.InjecOversamplingMode = DISABLE;
   if (HAL_ADCEx_InjectedConfigChannel(&hadc2, &sConfigInjected) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_2;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_92CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }

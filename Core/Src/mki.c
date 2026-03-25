@@ -17,6 +17,7 @@
 
 static pca9635_t led_dd1 = {0}, led_dd2 = {0}, led_dd3 = {0}, led_dd4 = {0};
 static pca9535_t key_dd5 = {0}, key_dd6 = {0};
+
 //Для прерываний INT
 uint32_t dd5_change_tick = 0, dd6_change_tick = 0;
 
@@ -236,36 +237,19 @@ void mki_test(void)
 
 	key = mki_get_key_from_dd(&key_dd6);
 	ulog_fmt("mki: DD6 %d"CRLF, key);
-
-	//led_dd4.ldrs_data[0] = led_dd4.ldrs_data[0] ? 0: 0x55;
-	//pca9635_send_ledout(&led_dd4, PCA9635_REG_LEDOUT0);
-	//HAL_Delay(1);
-	//led_dd4.ldrs_data[1] = led_dd4.ldrs_data[1] ? 0: 0x55;
-	//pca9635_send_ledout(&led_dd4, PCA9635_REG_LEDOUT1);
-	//HAL_Delay(1);
-	//led_dd4.ldrs_data[2] = led_dd4.ldrs_data[2] ? 0: 0x55;
-	//pca9635_send_ledout(&led_dd4, PCA9635_REG_LEDOUT2);
 }
 
 
 void mki_task(void)
 {
 	uint16_t key;
-	//uint16_t tmp;
 
 	if (dd5_change_tick && (HAL_DiffTick(dd5_change_tick) > 25)) 
 	{
 		dd5_change_tick = 0;
 
 		key = mki_get_key_from_dd(&key_dd5);
-	/*
-		tmp = key;
-		for (i = 8; i < 16; i++) 
-		{
-			if (GETBIT(tmp, i)) SETBIT(key, 15 - i);
-			else CLRBIT(key, 15 - i);
-		}
-	*/
+
 		for (uint8_t i = 0; i < 16; i++) 
 		{
 			if (!GETBIT(mki_keys[0], i) && GETBIT(key, i)) 
@@ -430,9 +414,6 @@ void mki_init(void)
 
 	PCA9635_write_reg(&led_dd4, PCA9635_REG_SUBADR3, 0);
 	HAL_Delay(1);
-
-
-
 
 	PCA9635_write_reg(&led_dd1, PCA9635_REG_LEDOUT0, 0x55);
 	PCA9635_write_reg(&led_dd1, PCA9635_REG_LEDOUT1, 0x55);

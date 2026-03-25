@@ -78,7 +78,7 @@ void set_ext_spk_offset(float volt)
 }
 
 static uint16_t ctrl_adc1_dma[2] = {0};
-static uint16_t ctrl_adc2_dma[1] = {0};
+static uint16_t ctrl_adc2_dma[2] = {0};
 // static uint16_t ctrl_adc3_dma[2] = {0};
 
 void ctrl_FullCpltCallback(ADC_HandleTypeDef* hadc)
@@ -116,13 +116,10 @@ void ctrl_button_unpress(uint8_t index)
 
 void ctrl_task(void)
 {
-	line_state_e line_state;
-	uint8_t color;
-
-	line_state = get_ctrl_out_adc_line_state(ctrl_index);
-	color = line_state_to_color(line_state);
-	if (mki_get_led_color(ctrl_index+1) != color) 
-		mki_set_led_color(ctrl_index+1,    color);
+	line_state_e line_state = get_ctrl_out_adc_line_state(ctrl_index);
+	uint8_t color = line_state_to_color(line_state);
+	if (mki_get_led_color(ctrl_index) != color) 
+		mki_set_led_color(ctrl_index,    color);
 
 	if (line_state == LINE_STATE_BUTTON_PRESS) 
 	{
@@ -168,18 +165,6 @@ void ctrl_task(void)
 		unset_fault(FAULT_OUT_ADC1_OBRIV + ctrl_index);
 	}
 
-	/*
-	if (ctrl_out_adc[ctrl_index + 8] < CTRL_VOLTAGE_KZ) 
-		set_fault(FAULT_OUT_ADC8_KZ + ctrl_index);
-	else if (ctrl_out_adc[ctrl_index + 8] > CTRL_VOLTAGE_OBRIV_OUT_ADC) 
-		set_fault(FAULT_OUT_ADC8_OBRIV + ctrl_index);
-	else 
-	{
-		unset_fault(FAULT_OUT_ADC8_KZ + ctrl_index);
-		unset_fault(FAULT_OUT_ADC8_OBRIV + ctrl_index);
-	}
-	*/
-
 	if (ctrl_p_out[ctrl_index] < CTRL_VOLTAGE_KZ) 
 		set_fault(FAULT_P_OUT_1_KZ + ctrl_index);
 	else if (ctrl_p_out[ctrl_index] > CTRL_VOLTAGE_OBRIV_P_OUT) 
@@ -190,33 +175,10 @@ void ctrl_task(void)
 		unset_fault(FAULT_P_OUT_1_OBRIV + ctrl_index);
 	}
 
-	/*if (ctrl_p_out[ctrl_index + 8] < CTRL_VOLTAGE_KZ) 
-		set_fault(FAULT_P_OUT_8_KZ + ctrl_index);
-	else if (ctrl_p_out[ctrl_index + 8] > CTRL_VOLTAGE_OBRIV_P_OUT) 
-		set_fault(FAULT_P_OUT_8_OBRIV + ctrl_index);
-	else 
-	{
-		unset_fault(FAULT_P_OUT_8_KZ + ctrl_index);
-		unset_fault(FAULT_P_OUT_8_OBRIV + ctrl_index);
-	}
-	*/
-
 	ctrl_index++;
-    ctrl_index %= 16;
+	ctrl_index %= 16;
 	
-	// ctrl_index = (ctrl_index > 16) ? 1 : ctrl_index;
-
 	set_adc_line(ctrl_index);
-
-	/*	
-	if (ctrl_index > 8) 
-		ctrl_index = 1;
-
-	set_dd2(ctrl_index - 1);
-	set_dd5(ctrl_index - 1);
-	set_dd1(ctrl_index - 1);
-	set_dd6(ctrl_index - 1);
-	*/
 
 	HAL_StatusTypeDef status;
 	status = HAL_ADC_Start_DMA(&hadc1, (uint32_t*)ctrl_adc1_dma, 2);
@@ -239,6 +201,8 @@ void ctrl_init(void)
 		ctrl_out_adc[i] = CTRL_VOLTAGE_NORMA;
 		ctrl_p_out[i]   = CTRL_VOLTAGE_NORMA;
 	}
+
+	set_adc_line(0);
 
 	//HAL_ADC_Start(&hadc2);
 	HAL_DAC_Start(&hdac2, DAC_CHANNEL_2);

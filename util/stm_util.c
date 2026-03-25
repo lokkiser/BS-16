@@ -194,11 +194,9 @@ void HAL_DelayTick(uint32_t Delay)
 
 void tick_to_time(uint32_t tick, uint8_t* hour, uint8_t* minute, uint8_t* sec, uint16_t* milisec)
 {
-	uint32_t s, m;
-
-	s = (tick / 1000);
+	uint32_t s = (tick / 1000);
 	*milisec = tick - s * 1000;
-	m = s / 60;
+	uint32_t m = s / 60;
 	*sec = s - m * 60;
 	*hour = m / 60;
 	*minute = m - *hour * 60;
@@ -207,23 +205,19 @@ void tick_to_time(uint32_t tick, uint8_t* hour, uint8_t* minute, uint8_t* sec, u
 #ifdef HAL_ADC_MODULE_ENABLED
 uint32_t get_adc_value(ADC_HandleTypeDef* hadc, uint32_t Timeout)
 {
-	uint32_t adc;
-
 	HAL_ADC_Start(hadc); // запускаем преобразование сигнала АЦП
     HAL_ADC_PollForConversion(hadc, Timeout); // ожидаем окончания преобразования
-    adc = HAL_ADC_GetValue(hadc); // читаем полученное значение в переменную adc
+    uint32_t res = HAL_ADC_GetValue(hadc); // читаем полученное значение в переменную adc
     HAL_ADC_Stop(hadc); // останавливаем АЦП
-	return adc;
+	return res;
 }
 
 #ifdef HAL_ADC_INJECTED_ENABLED
 uint32_t get_injected_adc_value(ADC_HandleTypeDef* hadc, uint32_t InjectedRank, uint32_t Timeout)
 {
-	uint32_t res;
-
 	HAL_ADCEx_InjectedStart(hadc); // запускаем опрос инжект. каналов
 	HAL_ADC_PollForConversion(hadc, Timeout); // ждём окончания
-	res = HAL_ADCEx_InjectedGetValue(hadc, InjectedRank);
+	uint32_t res = HAL_ADCEx_InjectedGetValue(hadc, InjectedRank);
 	HAL_ADCEx_InjectedStop(hadc);
 	return res;
 }

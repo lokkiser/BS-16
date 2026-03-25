@@ -18,19 +18,19 @@ static uint16_t dd3_value = 0, dd8_value = 0;
 
 void set_adc_line(uint8_t num)
 {
-	PIN_WRITE(MCU_MUX_CTRL_1, (num & 0x01) ? 1 : 0);
+	PIN_WRITE(MCU_MUX_CTRL_3, (num & 0x01) ? 1 : 0);
 	PIN_WRITE(MCU_MUX_CTRL_2, (num & 0x02) ? 1 : 0);
-	PIN_WRITE(MCU_MUX_CTRL_3, (num & 0x04) ? 1 : 0);
+	PIN_WRITE(MCU_MUX_CTRL_1, (num & 0x04) ? 1 : 0);
 
 	if(num < 8)
 	{
-		PIN_CLR(MCU_MUX_CTRL_5);
-		PIN_SET(MCU_MUX_CTRL_4);
+		PIN_CLR(MCU_MUX_CTRL_4);
+		PIN_SET(MCU_MUX_CTRL_5);
 	}
 	else if(num < 16)
 	{
-		PIN_CLR(MCU_MUX_CTRL_4);
-		PIN_SET(MCU_MUX_CTRL_5);
+		PIN_SET(MCU_MUX_CTRL_4);
+		PIN_CLR(MCU_MUX_CTRL_5);
 	}
 	else
 	{
@@ -139,13 +139,12 @@ void set_on_p(uint8_t on_p, i2c_mux_line_state_e state)
 			bitset(&dd8_value, AWAIT_CTRL_16,!!(state&0x2));
 			set_dd8(dd8_value);
 		break;
+
+		default: break;
 	}
 
-	line_state_e line_state;
-	uint8_t color;
-
-	line_state = get_ctrl_out_adc_line_state(on_p);
-	color = line_state_to_color(line_state);
+	line_state_e line_state = get_ctrl_out_adc_line_state(on_p);
+	uint8_t color = line_state_to_color(line_state);
 
 	mki_set_led_color(on_p, (!!(state&0x1)) ? MKI_LED_COLOR_BLUE : color);
 }

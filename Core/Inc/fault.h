@@ -86,6 +86,7 @@
 bool set_fault(uint8_t number);
 bool unset_fault(uint8_t number);
 bool is_set_fault(uint8_t number);
+bool is_fault(void);
 
 
 #endif /* CORE_INC_FAULT_H_ */

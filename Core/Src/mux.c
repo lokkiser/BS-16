@@ -144,9 +144,14 @@ void set_on_p(uint8_t on_p, i2c_mux_line_state_e state)
     }
 
     line_state_e line_state = get_ctrl_out_adc_line_state(on_p);
-    uint8_t color = line_state_to_color(line_state);
+    const led_color_t* color;
 
-    mki_set_led_color(on_p, (!!(state&0x1)) ? MKI_LED_COLOR_BLUE : color);
+    if(state&0x1)
+        color = mki_get_color_ptr(MKI_LED_COLOR_BLUE);
+    else
+        color = mki_get_color_ptr(line_state_to_color(line_state)); 
+
+    mki_set_pwm_color(on_p, color);
 }
 
 i2c_mux_line_state_e get_on_p(uint8_t on_p)

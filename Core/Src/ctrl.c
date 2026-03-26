@@ -48,7 +48,7 @@ uint8_t line_state_to_color(line_state_e line_state)
         case LINE_STATE_BREAK:         return MKI_LED_COLOR_BLACK;
         case LINE_STATE_DETECTED:      return MKI_LED_COLOR_GREEN;
         case LINE_STATE_BUTTON_PRESS:  return MKI_LED_COLOR_LIGHTBLUE;
-        case LINE_STATE_SHORT_CIRCUIT: return MKI_LED_COLOR_YELLOW;
+        case LINE_STATE_SHORT_CIRCUIT: return MKI_LED_COLOR_ORANGE;
         default:                       return MKI_LED_COLOR_BLACK;
     }
 }
@@ -130,9 +130,9 @@ void ctrl_task(void)
     HAL_Delay(1); // Чтобы точно завершить обработку прерываний
 
     line_state_e line_state = get_ctrl_out_adc_line_state(ctrl_index);
-    uint8_t color = line_state_to_color(line_state);
-    if (mki_get_led_color(ctrl_index+1) != color)
-        mki_set_led_color(ctrl_index+1,    color);
+    const led_color_t* color = mki_get_color_ptr(line_state_to_color(line_state));
+    if (mki_get_led_color(ctrl_index+1) != color->id)
+        mki_set_pwm_color(ctrl_index+1,    color);
 
     if (line_state == LINE_STATE_BUTTON_PRESS) 
     {
@@ -175,9 +175,6 @@ void ctrl_init(void)
 {
     ctrl_index = 0;
     set_adc_line(ctrl_index);
-
-    mki_set_led_color(MKI_LED_AVAR,  MKI_LED_COLOR_YELLOW);
-    HAL_Delay(1);
 
     //HAL_ADC_Start(&hadc2);
     HAL_DAC_Start(&hdac2, DAC_CHANNEL_2);

@@ -23,13 +23,14 @@
 #define CTRL_VOLTAGE_SHORT_CIRCUIT    0.2f
 
 static uint8_t ctrl_index = 0;
-float ctrl_adc_mic_signal[16] = {0};
+float ctrl_adc_mic_old[16]    = {0};
 float ctrl_adc_mic_idle[16]   = {0};
 float ctrl_adc_spk[16]        = {0};
 
 static uint16_t ctrl_adc1_dma[2] = {0};
 static uint16_t ctrl_adc2_dma[2] = {0};
 
+float ctrl_adc_mic_signal[16] = {0};
 // uint16_t adc_sound_buf[1];
 
 
@@ -84,7 +85,7 @@ void ctrl_FullCpltCallback(ADC_HandleTypeDef* hadc)
 {
     if (hadc == &hadc1) 
     {
-        // ctrl_adc_mic_signal[ctrl_index] = ctrl_adc_to_voltage[ctrl_index];
+        ctrl_adc_mic_old[ctrl_index]  = ctrl_adc_mic_idle[ctrl_index];
         ctrl_adc_mic_idle[ctrl_index] = ctrl_adc_to_voltage(ctrl_adc1_dma[0]);
 
         //adc_sound_buf[0] = (mux_is_active_line()) ? ctrl_adc1_dma[1] : 0;
@@ -101,9 +102,12 @@ void ctrl_FullCpltCallback(ADC_HandleTypeDef* hadc)
     }
 }
 
-void ctrl_button_press(uint8_t index)
+void ctrl_button_press(uint8_t num)
 {
-    ulog_fmt("ctrl: VP button press %d"CRLF, index);
+    ulog_fmt("ctrl: VP button press %d"CRLF, num);
+
+	if(get_on_p(num) != P_ON)
+    	set_on_p(num, P_AWAIT);
 }
 
 /*
@@ -130,15 +134,40 @@ void ctrl_task(void)
     HAL_Delay(1); // Чтобы точно завершить обработку прерываний
 
     line_state_e line_state = get_ctrl_out_adc_line_state(ctrl_index);
-    const led_color_t* color = mki_get_color_ptr(line_state_to_color(line_state));
-    if (mki_get_led_color(ctrl_index+1) != color->id)
-        mki_set_pwm_color(ctrl_index+1,    color);
+
+    switch(get_on_p(ctrl_index+1))
+    {
+    	default:
+    	case P_ERROR:
+    	case P_IDLE:
+		    const led_color_t* color = mki_get_color_ptr(line_state_to_color(line_state));
+		    if (mki_get_led_color(ctrl_index+1) != color->id)
+		    {
+		        mki_set_pwm_color(ctrl_index+1,    color);
+		    }
+    	break;
+
+    	case P_AWAIT:
+    		if (mki_get_led_color(ctrl_index+1) != MKI_LED_COLOR_LIGHTBLUE)
+		    {
+		    	mki_set_pwm_color(ctrl_index+1, mki_get_color_ptr(MKI_LED_COLOR_LIGHTBLUE));
+		    }   
+    	break;
+
+    	case P_ON:
+    		if (mki_get_led_color(ctrl_index+1) != MKI_LED_COLOR_BLUE)
+		    {
+		    	mki_set_pwm_color(ctrl_index+1, mki_get_color_ptr(MKI_LED_COLOR_BLUE));
+		    }
+		break;
+    }
+    
 
     if (line_state == LINE_STATE_BUTTON_PRESS) 
     {
-        if (voltage_out_adc_to_line_state(ctrl_adc_mic_idle[ctrl_index]) != LINE_STATE_BUTTON_PRESS) 
+        if (voltage_out_adc_to_line_state(ctrl_adc_mic_old[ctrl_index]) != LINE_STATE_BUTTON_PRESS) 
         {
-            ctrl_button_press(ctrl_index);
+            ctrl_button_press(ctrl_index+1);
         }
     }
 

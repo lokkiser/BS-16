@@ -364,7 +364,7 @@ void mki_press(uint8_t key)
     ulog_fmt("mki_press %d"CRLF, key);
     if (key <= MKI_KEY_16) 
     {
-        i2c_mux_line_state_e state = get_on_p(key);
+        p_line_state_e state = get_on_p(key);
         if(state == P_AWAIT && !mux_is_active_line())
             set_on_p(key, P_ON);
         else if(state == ON || state == P_ERROR)
@@ -379,6 +379,8 @@ void mki_press(uint8_t key)
     {
         local_mic_stop();
         local_spk_stop();
+
+        mux_cancel_all();
 
         // set_dd3(0);
         // set_dd8(0);

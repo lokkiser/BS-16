@@ -11,14 +11,48 @@
 #include "main.h"
 #include "stm_util.h"
 
+
+#pragma pack(1)
 typedef enum
 {
     P_IDLE  = 0x0,
     P_ON    = 0x1,
     P_AWAIT = 0x2,
     P_ERROR = 0x3,
-} i2c_mux_line_state_e;
+} p_line_state_e;
 
+typedef union
+{
+    struct
+    {
+        uint16_t dd3;
+        uint16_t dd8;
+    } data;
+
+    struct 
+    {
+        p_line_state_e p_1;
+        p_line_state_e p_2;
+        p_line_state_e p_3;
+        p_line_state_e p_4;
+
+        p_line_state_e p_5;
+        p_line_state_e p_6;
+        p_line_state_e p_7;
+        p_line_state_e p_8;
+
+        p_line_state_e p_9;
+        p_line_state_e p_10;
+        p_line_state_e p_11;
+        p_line_state_e p_12;
+
+        p_line_state_e p_13;
+        p_line_state_e p_14;
+        p_line_state_e p_15;
+        p_line_state_e p_16;        
+    } lines;
+} line_p_outs_u;
+#pragma pack()
 
 #define OUT_ADC1	0
 #define OUT_ADC2	1
@@ -28,7 +62,6 @@ typedef enum
 #define OUT_ADC6	5
 #define OUT_ADC7	6
 #define OUT_ADC8	7
-// void set_dd2(uint8_t value);  // DD2 -> DD2
 
 #define OUT_ADC9	0
 #define OUT_ADC10	1
@@ -38,7 +71,6 @@ typedef enum
 #define OUT_ADC14	5
 #define OUT_ADC15	6
 #define OUT_ADC16	7
-// void set_dd4(uint8_t value);  // DD5 -> DD4
 
 
 //void set_out_adc(uint8_t out_adc1_adc16);
@@ -51,7 +83,6 @@ typedef enum
 #define P_OUT_6		5
 #define P_OUT_7		6
 #define P_OUT_8		7
-// void set_dd1(uint8_t value);   // DD1 -> DD1
 
 #define P_OUT_9		0
 #define P_OUT_10	1
@@ -61,7 +92,6 @@ typedef enum
 #define P_OUT_14	5
 #define P_OUT_15	6
 #define P_OUT_16	7
-// void set_dd5(uint8_t value);   // DD6-> DD5
 
 
 //void set_p_out(uint8_t p_out_1_p_out_16);
@@ -88,7 +118,6 @@ typedef enum
 #define AWAIT_CTRL_7  13
 #define ON_P_8        14
 #define AWAIT_CTRL_8  15
-// void set_dd3(uint16_t value);  // DD3 -> DD3
 
 #define ON_P_9        0
 #define AWAIT_CTRL_9  1
@@ -106,12 +135,13 @@ typedef enum
 #define AWAIT_CTRL_15 13
 #define ON_P_16       14
 #define AWAIT_CTRL_16 15
-// void set_dd8(uint16_t value);  // DD4 -> DD8
 
 void set_adc_line(uint8_t num);
-void set_on_p(uint8_t on_p, i2c_mux_line_state_e value);
-i2c_mux_line_state_e get_on_p(uint8_t on_p);
+void set_on_p(uint8_t on_p, p_line_state_e value);
+p_line_state_e get_on_p(uint8_t on_p);
+
 void mux_init(void);
 bool mux_is_active_line(void);
+void mux_cancel_all(void);
 
 #endif /* CORE_INC_MUX_H_ */

@@ -131,16 +131,66 @@ void set_on_p(uint8_t on_p, p_line_state_e state)
 
         default: break;
     }
-
-    line_state_e line_state = get_ctrl_out_adc_line_state(on_p);
+/*
+    adc_state_e line_state = get_ctrl_out_adc_line_state(on_p);
     const led_color_t* color;
 
-    if(state&0x1)
+    if((state&0x3) == 0x01)
         color = mki_get_color_ptr(MKI_LED_COLOR_BLUE);
     else
         color = mki_get_color_ptr(line_state_to_color(line_state)); 
 
     mki_set_pwm_color(on_p, color);
+*/
+}
+
+p_line_state_e get_on_p(uint8_t on_p)
+{
+    uint32_t res = (p_outs.data.dd8 << 16) | p_outs.data.dd3;
+    res >>= (on_p-1)*2; 
+
+    return res&0x3;
+}
+
+void mux_init(void)
+{
+    uint16_t init = 0;
+
+    pca9535_init(&dd3, MUX_I2C_HANDLE, MUX_DD3_ADDERESS);
+    if (pca9535_is_ready(&dd3) != 0) 
+    {
+        ulog("mux: error DD3 not ready"CRLF);
+        set_fault(FAULT_HARDWARE_ERROR);
+    }
+
+    HAL_Delay(1);
+    pca9535_set_reg(&dd3, PCA9535_REG_TYPE_CONFIG, PCA9535_PORT_BOTH, (uint8_t*)&init, 2); //output
+    HAL_Delay(1);
+    set_dd3(0);
+    
+    HAL_Delay(1);
+
+    pca9535_init(&dd8, MUX_I2C_HANDLE, MUX_DD8_ADDERESS);
+    if (pca9535_is_ready(&dd8) != 0) 
+    {
+        ulog("mux: error DD4 not ready"CRLF);
+        set_fault(FAULT_HARDWARE_ERROR);
+    }
+    HAL_Delay(1);
+    pca9535_set_reg(&dd8, PCA9535_REG_TYPE_CONFIG, PCA9535_PORT_BOTH, (uint8_t*)&init, 2);
+    HAL_Delay(1);
+    set_dd8(0);
+}
+
+bool mux_is_active_line(void)
+{
+    return ((p_outs.data.dd3 & 0x5555) || (p_outs.data.dd8 & 0x5555));
+}
+
+void mux_cancel_all(void)
+{
+    set_dd3(p_outs.data.dd3 & ~0x5555);
+    set_dd8(p_outs.data.dd8 & ~0x5555);
 }
 
 /*
@@ -244,55 +294,6 @@ void set_on_p(uint8_t on_p, p_line_state_e state)
     mki_set_pwm_color(on_p, color);
 }
 */
-
-p_line_state_e get_on_p(uint8_t on_p)
-{
-    uint32_t res = (p_outs.data.dd8 << 16) | p_outs.data.dd3;
-    res >>= (on_p-1)*2; 
-
-    return res&0x3;
-}
-
-void mux_init(void)
-{
-    pca9535_init(&dd3, MUX_I2C_HANDLE, MUX_DD3_ADDERESS);
-    if (pca9535_is_ready(&dd3) != 0) 
-    {
-        ulog("mux: error DD3 not ready"CRLF);
-        set_fault(FAULT_HARDWARE_ERROR);
-    }
-
-    pca9535_set_reg(&dd3, PCA9535_REG_TYPE_CONFIG, PCA9535_PORT_0, 0, 1); //output
-    HAL_Delay(1);
-    pca9535_set_reg(&dd3, PCA9535_REG_TYPE_CONFIG, PCA9535_PORT_1, 0, 1); //output
-    HAL_Delay(1);
-    set_dd3(0);
-    HAL_Delay(1);
-
-    pca9535_init(&dd8, MUX_I2C_HANDLE, MUX_DD8_ADDERESS);
-    if (pca9535_is_ready(&dd8) != 0) 
-    {
-        ulog("mux: error DD4 not ready"CRLF);
-        set_fault(FAULT_HARDWARE_ERROR);
-    }
-    pca9535_set_reg(&dd8, PCA9535_REG_TYPE_CONFIG, PCA9535_PORT_0, 0, 1); //output
-    HAL_Delay(1);
-    pca9535_set_reg(&dd8, PCA9535_REG_TYPE_CONFIG, PCA9535_PORT_1, 0, 1); //output
-    HAL_Delay(1);
-    set_dd8(0);
-    HAL_Delay(1);
-}
-
-bool mux_is_active_line(void)
-{
-    return ((p_outs.data.dd3 & 0x5555) || (p_outs.data.dd8 & 0x5555));
-}
-
-void mux_cancel_all(void)
-{
-    set_dd3(p_outs.data.dd3 & ~0x5555);
-    set_dd8(p_outs.data.dd8 & ~0x5555);
-}
 
 /*
 //микросхемы dd3 и dd8

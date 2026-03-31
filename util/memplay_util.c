@@ -89,7 +89,7 @@ void memplay_mad2buf(void)
    		if (!memplay_samplerate) 
    		{
    			memplay_samplerate = MIN(global_mad_data.frame.header.samplerate, MEMPLAY_MAX_AUDIO_FREQUENCY);
-   			set_tim_frequency2_and_start(memplay_htim, memplay_samplerate, BASE_TIM_FREQUENSY);
+   			set_tim_frequency2_and_start(memplay_htim, memplay_samplerate, BASE_TIM_FREQUENCY);
    			ulog_fmt("memplay: samplerate=%lu, %s"CRLF, memplay_samplerate, (global_mad_data.frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? "mono" : "stereo"));
    		}
 
@@ -211,7 +211,7 @@ void memplay(const uint8_t * mem, uint32_t mem_size, dacplay_data_t * dacplay_da
 	memplay_htim = htim;
 
 
-	set_tim_frequency2_and_start(memplay_htim, MEMPLAY_MAX_AUDIO_FREQUENCY, BASE_TIM_FREQUENSY);
+	set_tim_frequency2_and_start(memplay_htim, MEMPLAY_MAX_AUDIO_FREQUENCY, BASE_TIM_FREQUENCY);
 	dacplay_start_dma(memplay_dacplay_data);
 
 	memplay_mem = (uint8_t *)mem;

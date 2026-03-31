@@ -76,6 +76,7 @@ DMA_HandleTypeDef hdma_adc5;
 DAC_HandleTypeDef hdac1;
 DAC_HandleTypeDef hdac2;
 DMA_HandleTypeDef hdma_dac1_ch1;
+DMA_HandleTypeDef hdma_dac1_ch2;
 DMA_HandleTypeDef hdma_dac2_ch1;
 
 I2C_HandleTypeDef hi2c3;
@@ -178,6 +179,10 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
     {
         local_mic_adc_HalfCpltCallback();
     }
+    else if(hadc == LOCAL_SPK_ADC_HANDLE)
+    {
+        local_spk_adc_HalfCpltCallback();
+    }
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
@@ -185,6 +190,10 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
     if (hadc == LOCAL_MIC_ADC_HANDLE)
     {
         local_mic_adc_FullCpltCallback();
+    }
+    else if(hadc == LOCAL_SPK_ADC_HANDLE)
+    {
+        local_spk_adc_FullCpltCallback();
     }
     else
     {
@@ -198,10 +207,10 @@ void HAL_DAC_ConvHalfCpltCallbackCh1(DAC_HandleTypeDef *hdac)
     {
         local_mic_dac_HalfCpltCallback();
     }
-    else if (hdac == LOCAL_SPK_DAC_HANDLE)
-    {
-        local_spk_dac_HalfCpltCallback();
-    }
+    // else if (hdac == LOCAL_SPK_DAC_HANDLE)
+    // {
+    //     local_spk_dac_HalfCpltCallback();
+    // }
 }
 
 void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef *hdac)
@@ -210,13 +219,33 @@ void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef *hdac)
     {
         local_mic_dac_FullCpltCallback();
     }
-    else if (hdac == LOCAL_SPK_DAC_HANDLE)
+    // else if (hdac == LOCAL_SPK_DAC_HANDLE)
+    // {
+    //     local_spk_dac_FullCpltCallback();
+    // }
+}
+
+void HAL_DACEx_ConvHalfCpltCallbackCh2(DAC_HandleTypeDef *hdac)
+{
+    if (hdac == LOCAL_SPK_DAC_HANDLE)
+    {
+        local_spk_dac_HalfCpltCallback();
+    }
+}
+
+void HAL_DACEx_ConvCpltCallbackCh2(DAC_HandleTypeDef *hdac)
+{
+    if (hdac == LOCAL_SPK_DAC_HANDLE)
     {
         local_spk_dac_FullCpltCallback();
     }
 }
 
 void HAL_DAC_ErrorCallbackCh1(DAC_HandleTypeDef *hdac)
+{
+}
+
+void HAL_DACEx_ErrorCallbackCh2(DAC_HandleTypeDef *hdac)
 {
 }
 
@@ -314,19 +343,27 @@ int main(void)
   MX_DAC1_Init();
   MX_I2C3_Init();
   MX_I2C4_Init();
+  MX_DAC2_Init();
   MX_RTC_Init();
   MX_USART1_UART_Init();
   MX_ADC4_Init();
   MX_SPI1_Init();
   MX_TIM15_Init();
-
   /* USER CODE BEGIN 2 */
-  __HAL_RCC_I2C1_CLK_ENABLE();
-  HAL_Delay(100);
-  __HAL_RCC_I2C1_FORCE_RESET();
-  HAL_Delay(100);
-  __HAL_RCC_I2C1_RELEASE_RESET();
-  HAL_Delay(100);
+//  __HAL_RCC_I2C1_CLK_ENABLE();
+//  HAL_Delay(10);
+//  __HAL_RCC_I2C1_FORCE_RESET();
+//  HAL_Delay(10);
+//  __HAL_RCC_I2C1_RELEASE_RESET();
+//  HAL_Delay(10);
+//
+//  __HAL_RCC_I2C2_CLK_ENABLE();
+//  HAL_Delay(10);
+//  __HAL_RCC_I2C2_FORCE_RESET();
+//  HAL_Delay(10);
+//  __HAL_RCC_I2C2_RELEASE_RESET();
+//  HAL_Delay(10);
+
 
   HAL_DAC_MspInit(&hdac1); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
   HAL_DAC_MspInit(&hdac2); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
@@ -339,11 +376,12 @@ int main(void)
   HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
 
   set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
-  //HAL_TIM_Base_Start(&htim15);
+ // set_tim_frequency2(&htim8,  BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
+ // HAL_TIM_Base_Start(&htim15);
 
   HAL_Delay(1000);
 
-  ulog(CRLF"Start Trombon BC-16"CRLF);
+  ulog(CRLF"Start Trombon BS-16"CRLF);
   //ulog_fmt("Version: %s"CRLF, VERSION);
   ulog_fmt("Version: %s"CRLF, "1.0"); // TODO
 
@@ -399,7 +437,7 @@ int main(void)
   //rtcTime.dayOfWeek =2;
   //rtcTime.day =6;
   //RTC_BQ32000_SetTime(&hi2c3, &rtcTime);
-  ulog_fmt("BQ32000: dattetime now %s"CRLF, rtc_read_datetime_str(true));
+  ulog_fmt("BQ32000: datetime now %s"CRLF, rtc_read_datetime_str(true));
 
   if (strlen(setting.date_time))
   {
@@ -421,7 +459,9 @@ int main(void)
   ctrl_init();
 
   timers_add(on_timer_10_msec,  10);
-  timers_add(on_timer_50_msec,  50);
+  // timers_add(on_timer_50_msec,  50);
+  #warning 30msec
+  timers_add(on_timer_50_msec,  30);
   timers_add(on_timer_250_msec, 250);
   timers_add(on_timer_1_sec,    1000);
   timers_add(on_timer_1_min,    60000);
@@ -429,9 +469,12 @@ int main(void)
   filelog("Перезагрузка"CRLF);
 
   memplay_init(sound_buf, sizeof(sound_buf));
-  memplay(start_sound, sizeof(start_sound), &spk_dacplay_data, setting.spk_volume, &htim15);
+  // memplay(start_sound, sizeof(start_sound), &spk_dacplay_data, setting.spk_volume, &htim15);
+  memplay(start_sound, sizeof(start_sound), &spk_dacplay_data, 50, &htim15);
+  #warning hardcoded volume 50
 
-  ulog("BC-16 goto loop"CRLF);
+
+  ulog("BS-16 goto loop"CRLF);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -757,7 +800,7 @@ static void MX_ADC4_Init(void)
   hadc4.Init.DiscontinuousConvMode = DISABLE;
   hadc4.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T15_TRGO;
   hadc4.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
-  hadc4.Init.DMAContinuousRequests = DISABLE;
+  hadc4.Init.DMAContinuousRequests = ENABLE;
   hadc4.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc4.Init.OversamplingMode = DISABLE;
   if (HAL_ADC_Init(&hadc4) != HAL_OK)
@@ -816,7 +859,7 @@ static void MX_ADC5_Init(void)
   hadc5.Init.DiscontinuousConvMode = DISABLE;
   hadc5.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T15_TRGO;
   hadc5.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
-  hadc5.Init.DMAContinuousRequests = DISABLE;
+  hadc5.Init.DMAContinuousRequests = ENABLE;
   hadc5.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc5.Init.OversamplingMode = DISABLE;
   if (HAL_ADC_Init(&hadc5) != HAL_OK)
@@ -959,7 +1002,7 @@ static void MX_I2C3_Init(void)
 
   /* USER CODE END I2C3_Init 1 */
   hi2c3.Instance = I2C3;
-  hi2c3.Init.Timing = 0x60715075;
+  hi2c3.Init.Timing = 0x10E32674;
   hi2c3.Init.OwnAddress1 = 0;
   hi2c3.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c3.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -1319,6 +1362,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel7_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+  /* DMA1_Channel8_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel8_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel8_IRQn);
 
 }
 

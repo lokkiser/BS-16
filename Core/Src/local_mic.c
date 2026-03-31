@@ -14,7 +14,7 @@
 static bool local_mic_is_start = false;
 static uint16_t local_mic_dma_adc_buf[2][SOUND_DMA_BUFFER_SIZE];
 static uint16_t local_mic_dma_dac_buf[2][SOUND_DMA_BUFFER_SIZE];
-static uint8_t local_mic_dma_dac_index = 0xFF;
+static uint8_t  local_mic_dma_dac_index = 0xFF;
 
 
 
@@ -80,23 +80,23 @@ bool local_mic_start(void)
 		local_mic_stop();
 	}
 
-	//set_tim_frequency2(LOCAL_MIC_ADC_TIM_HANDLE, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
-	//HAL_TIM_Base_Start(LOCAL_MIC_ADC_TIM_HANDLE);
+	// set_tim_frequency2(LOCAL_MIC_ADC_TIM_HANDLE, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
+	HAL_TIM_Base_Start(LOCAL_MIC_ADC_TIM_HANDLE);
 	status = HAL_ADC_Start_DMA(LOCAL_MIC_ADC_HANDLE, (uint32_t*)local_mic_dma_adc_buf, SOUND_DMA_BUFFER_SIZE * 2);
 	if (status != HAL_OK) 
 	{
 		local_mic_stop();
-		ulog_fmt("local_mic: error invalid start dma adc status = %d"CRLF, status);
+		ulog_fmt("local_mic: error invalid start dma ADC status = %d"CRLF, status);
 		return false;
 	}
 
-	//set_tim_frequency2(LOCAL_MIC_DAC_TIM_HANDLE, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
-	//HAL_TIM_Base_Start(LOCAL_MIC_DAC_TIM_HANDLE);
+	// set_tim_frequency2(LOCAL_MIC_DAC_TIM_HANDLE, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
+	// HAL_TIM_Base_Start(LOCAL_MIC_DAC_TIM_HANDLE);
 	status = HAL_DAC_Start_DMA(LOCAL_MIC_DAC_HANDLE, LOCAL_MIC_DAC_CHANNEL, (uint32_t*)local_mic_dma_dac_buf, SOUND_DMA_BUFFER_SIZE * 2, DAC_ALIGN_12B_R);
 	if (status != HAL_OK) 
 	{
 		local_mic_stop();
-		ulog_fmt("local_mic: error invalid start dma dac status = %d"CRLF, status);
+		ulog_fmt("local_mic: error invalid start dma DAC status = %d"CRLF, status);
 		return false;
 	}
 

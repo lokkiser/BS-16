@@ -16,10 +16,10 @@ typedef enum
 	LINE_STATE_DETECTED, 	 //ВП найдено
 	LINE_STATE_BUTTON_PRESS, //ВП нажата кнопка
 	LINE_STATE_SHORT_CIRCUIT //КЗ
-} line_state_e;
+} adc_state_e;
 
-line_state_e get_ctrl_out_adc_line_state(uint8_t number);
-uint8_t line_state_to_color(line_state_e line_state);
+adc_state_e get_ctrl_out_adc_line_state(uint8_t number);
+uint8_t line_state_to_color(adc_state_e adc_state);
 
 
 extern float ctrl_out_adc[16];

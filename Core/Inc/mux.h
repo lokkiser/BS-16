@@ -11,7 +11,6 @@
 #include "main.h"
 #include "stm_util.h"
 
-
 #pragma pack(1)
 typedef enum
 {
@@ -31,25 +30,25 @@ typedef union
 
     struct 
     {
-        p_line_state_e p_1;
-        p_line_state_e p_2;
-        p_line_state_e p_3;
-        p_line_state_e p_4;
+        p_line_state_e p_1   :2;
+        p_line_state_e p_2   :2;
+        p_line_state_e p_3   :2;
+        p_line_state_e p_4   :2;
 
-        p_line_state_e p_5;
-        p_line_state_e p_6;
-        p_line_state_e p_7;
-        p_line_state_e p_8;
+        p_line_state_e p_5   :2;
+        p_line_state_e p_6   :2;
+        p_line_state_e p_7   :2;
+        p_line_state_e p_8   :2;
 
-        p_line_state_e p_9;
-        p_line_state_e p_10;
-        p_line_state_e p_11;
-        p_line_state_e p_12;
+        p_line_state_e p_9   :2;
+        p_line_state_e p_10  :2;
+        p_line_state_e p_11  :2;
+        p_line_state_e p_12  :2;
 
-        p_line_state_e p_13;
-        p_line_state_e p_14;
-        p_line_state_e p_15;
-        p_line_state_e p_16;        
+        p_line_state_e p_13  :2;
+        p_line_state_e p_14  :2;
+        p_line_state_e p_15  :2;
+        p_line_state_e p_16  :2;      
     } lines;
 } line_p_outs_u;
 #pragma pack()

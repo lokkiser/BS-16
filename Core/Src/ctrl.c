@@ -31,10 +31,9 @@ static uint16_t ctrl_adc1_dma[2] = {0};
 static uint16_t ctrl_adc2_dma[2] = {0};
 
 float ctrl_adc_mic_signal[16] = {0};
-// uint16_t adc_sound_buf[1];
 
 
-line_state_e voltage_out_adc_to_line_state(float volt)
+adc_state_e voltage_out_adc_to_line_state(float volt)
 {
     if      (volt > CTRL_VOLTAGE_BREAK)      	return LINE_STATE_BREAK;
     else if (volt > CTRL_VOLTAGE_DETECTED)      return LINE_STATE_DETECTED;
@@ -42,7 +41,7 @@ line_state_e voltage_out_adc_to_line_state(float volt)
     else                                        return LINE_STATE_SHORT_CIRCUIT;
 }
 
-uint8_t line_state_to_color(line_state_e line_state)
+uint8_t line_state_to_color(adc_state_e line_state)
 {
     switch (line_state) 
     {
@@ -54,7 +53,7 @@ uint8_t line_state_to_color(line_state_e line_state)
     }
 }
 
-line_state_e get_ctrl_out_adc_line_state(uint8_t number)
+adc_state_e get_ctrl_out_adc_line_state(uint8_t number)
 {
     return voltage_out_adc_to_line_state(ctrl_adc_mic_idle[number]);
 }
@@ -78,7 +77,7 @@ void set_ext_spk_offset(float volt)
 {
     uint32_t value = 4095.0f * volt / 3.3f;
 
-    HAL_DAC_SetValue(&hdac2, DAC_CHANNEL_2, DAC_ALIGN_12B_R, value);
+    HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, value);
 }
 
 void ctrl_FullCpltCallback(ADC_HandleTypeDef* hadc)
@@ -116,6 +115,14 @@ void ctrl_button_unpress(uint8_t index)
 }
 */
 
+static void ctrl_led_front(uint8_t idx, uint8_t color_id)
+{
+	if (mki_get_led_color(idx) != color_id)
+    {
+        mki_set_pwm_color(idx+1, mki_get_color_ptr(color_id));
+    }
+}
+
 void ctrl_task(void)
 {
     HAL_StatusTypeDef status;
@@ -133,42 +140,51 @@ void ctrl_task(void)
 
     HAL_Delay(1); // Чтобы точно завершить обработку прерываний
 
-    line_state_e line_state = get_ctrl_out_adc_line_state(ctrl_index);
+    adc_state_e     adc_state = get_ctrl_out_adc_line_state(ctrl_index);
+    p_line_state_e line_state = get_on_p(ctrl_index+1);
+
+    switch(adc_state)
+    {
+    	case LINE_STATE_BREAK:
+    	case LINE_STATE_SHORT_CIRCUIT:
+    		
+    	break;
+    
+    	case LINE_STATE_DETECTED:
+    		if(line_state == P_ERROR)
+				set_on_p(ctrl_index+1, P_IDLE);
+    	break;
+
+    	case LINE_STATE_BUTTON_PRESS:
+        if( (voltage_out_adc_to_line_state(ctrl_adc_mic_old[ctrl_index]) == LINE_STATE_BUTTON_PRESS)
+         && (line_state == P_IDLE) )
+        {
+            ctrl_button_press(ctrl_index+1);
+        }
+    	break;
+
+    	default: break;
+    }
 
     switch(get_on_p(ctrl_index+1))
     {
     	default:
     	case P_ERROR:
+			ctrl_led_front(ctrl_index, MKI_LED_COLOR_RED);
+		break;
+
     	case P_IDLE:
-		    const led_color_t* color = mki_get_color_ptr(line_state_to_color(line_state));
-		    if (mki_get_led_color(ctrl_index+1) != color->id)
-		    {
-		        mki_set_pwm_color(ctrl_index+1,    color);
-		    }
+	    	const uint8_t color_id = line_state_to_color(adc_state);
+	    	ctrl_led_front(ctrl_index, color_id);
     	break;
 
     	case P_AWAIT:
-    		if (mki_get_led_color(ctrl_index+1) != MKI_LED_COLOR_LIGHTBLUE)
-		    {
-		    	mki_set_pwm_color(ctrl_index+1, mki_get_color_ptr(MKI_LED_COLOR_LIGHTBLUE));
-		    }   
+    		ctrl_led_front(ctrl_index, MKI_LED_COLOR_LIGHTBLUE);
     	break;
 
     	case P_ON:
-    		if (mki_get_led_color(ctrl_index+1) != MKI_LED_COLOR_BLUE)
-		    {
-		    	mki_set_pwm_color(ctrl_index+1, mki_get_color_ptr(MKI_LED_COLOR_BLUE));
-		    }
+    		ctrl_led_front(ctrl_index, MKI_LED_COLOR_BLUE);
 		break;
-    }
-    
-
-    if (line_state == LINE_STATE_BUTTON_PRESS) 
-    {
-        if (voltage_out_adc_to_line_state(ctrl_adc_mic_old[ctrl_index]) != LINE_STATE_BUTTON_PRESS) 
-        {
-            ctrl_button_press(ctrl_index+1);
-        }
     }
 
     //OUT_ADC 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2
@@ -206,5 +222,5 @@ void ctrl_init(void)
     set_adc_line(ctrl_index);
 
     //HAL_ADC_Start(&hadc2);
-    HAL_DAC_Start(&hdac2, DAC_CHANNEL_2);
+    // HAL_DAC_Start(&hdac2, DAC_CHANNEL_1);
 }

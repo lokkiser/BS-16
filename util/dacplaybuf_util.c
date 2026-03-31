@@ -74,7 +74,7 @@ void dacplaybuf_start_dma(dacplaybuf_data_t* dacplaybuf_data)
 {
 	if (dacplaybuf_data->dma_started) dacplaybuf_stop_dma(dacplaybuf_data);
 	if (dacplaybuf_data->htim) {
-		set_tim_frequency2(dacplaybuf_data->htim, dacplaybuf_data->frequency, BASE_TIM_FREQUENSY);
+		set_tim_frequency2(dacplaybuf_data->htim, dacplaybuf_data->frequency, BASE_TIM_FREQUENCY);
 		HAL_TIM_Base_Start(dacplaybuf_data->htim);
 	}
 	HAL_DAC_Start_DMA(dacplaybuf_data->hdac, dacplaybuf_data->dac_channel, (uint32_t*)dacplaybuf_data->dma_buf, DACPLAYBUF_DMA_BUF_SIZE * 2, DAC_ALIGN_12B_R);

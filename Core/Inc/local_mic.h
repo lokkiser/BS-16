@@ -11,11 +11,11 @@
 #include "main.h"
 #include "dynbuf_util.h"
 
-#define LOCAL_MIC_ADC_HANDLE		&hadc5
-//#define LOCAL_MIC_ADC_TIM_HANDLE	&htim15
+#define LOCAL_MIC_ADC_HANDLE		&hadc4
+#define LOCAL_MIC_ADC_TIM_HANDLE	&htim15
 
 
-#define LOCAL_MIC_DAC_HANDLE		&hdac1
+#define LOCAL_MIC_DAC_HANDLE		&hdac2
 #define LOCAL_MIC_DAC_CHANNEL		DAC_CHANNEL_1
 //#define LOCAL_MIC_DAC_TIM_HANDLE	&htim8
 

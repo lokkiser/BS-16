@@ -20,8 +20,8 @@ extern adcplay_data_t spk_adcplay_data;
 extern  uint8_t sound_buf[SOUND_BUF_SIZE];
 
 
-#define LOCAL_SPK_ADC_HANDLE		&hadc4
-//#define LOCAL_SPK_ADC_TIM_HANDLE	&htim15
+#define LOCAL_SPK_ADC_HANDLE		&hadc5
+#define LOCAL_SPK_ADC_TIM_HANDLE	&htim15
 
 
 #define LOCAL_SPK_DAC_HANDLE		&hdac1

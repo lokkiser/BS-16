@@ -372,8 +372,11 @@ void mki_press(uint8_t key)
     }
     else if (key == MKI_KEY_ZVUKOVOI_VIZOV) 
     {
-        local_mic_start();
-        local_spk_start();
+        if(mux_is_active_line())
+        {
+            local_mic_start();
+            local_spk_start();
+        }
     }
     else if (key == MKI_KEY_KONEC_SVAZI) 
     {

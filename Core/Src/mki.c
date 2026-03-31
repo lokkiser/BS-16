@@ -14,6 +14,7 @@
 #include "mux.h"
 #include "local_mic.h"
 #include "local_spk.h"
+#include "ctrl.h"
 
 static pca9635_t led_dd1 = {0}, led_dd2 = {0}, led_dd3 = {0}, led_dd4 = {0};
 static pca9535_t key_dd5 = {0}, key_dd6 = {0};
@@ -364,11 +365,22 @@ void mki_press(uint8_t key)
     ulog_fmt("mki_press %d"CRLF, key);
     if (key <= MKI_KEY_16) 
     {
-        p_line_state_e state = get_on_p(key);
-        if(state == P_AWAIT && !mux_is_active_line())
-            set_on_p(key, P_ON);
-        else if(state == ON || state == P_ERROR)
-            set_on_p(key, P_IDLE);
+        p_line_state_e p_state = get_on_p(key);
+        adc_state_e  adc_state = get_ctrl_out_adc_line_state(key-1);
+        if(adc_state == LINE_STATE_BUTTON_PRESS || adc_state == LINE_STATE_DETECTED)
+        {
+            if(p_state == P_IDLE && !mux_is_active_line())
+                set_on_p(key, P_AWAIT);
+            else if(p_state == P_AWAIT && !mux_is_active_line())
+                set_on_p(key, P_ON);
+            else if(p_state == ON || p_state == P_ERROR)
+            {
+                set_on_p(key, P_IDLE);
+
+                local_mic_stop();
+                local_spk_stop();
+            }
+        }
     }
     else if (key == MKI_KEY_ZVUKOVOI_VIZOV) 
     {

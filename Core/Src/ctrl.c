@@ -156,7 +156,7 @@ void ctrl_task(void)
     	break;
 
     	case LINE_STATE_BUTTON_PRESS:
-        if( (voltage_out_adc_to_line_state(ctrl_adc_mic_old[ctrl_index]) == LINE_STATE_BUTTON_PRESS)
+        if( (voltage_out_adc_to_line_state(ctrl_adc_mic_old[ctrl_index]) != LINE_STATE_BUTTON_PRESS)
          && (line_state == P_IDLE) )
         {
             ctrl_button_press(ctrl_index+1);
@@ -223,4 +223,5 @@ void ctrl_init(void)
 
     //HAL_ADC_Start(&hadc2);
     // HAL_DAC_Start(&hdac2, DAC_CHANNEL_1);
+    #warning TODO
 }

@@ -10,15 +10,13 @@
 #include "pca9535.h"
 #include "fault.h"
 #include "math_util.h"
-#include "mki.h"
-#include "ctrl.h"
 
 static pca9535_t dd3, dd8;
 
 static line_p_outs_u p_outs = {0};
 // static uint16_t  dd3_value = 0, dd8_value = 0;
 
-void set_adc_line(uint8_t num)
+void set_mux_line(uint8_t num)
 {
     PIN_WRITE(MCU_MUX_CTRL_1, (num & 0x01) ? 1 : 0);
     PIN_WRITE(MCU_MUX_CTRL_2, (num & 0x02) ? 1 : 0);
@@ -57,12 +55,12 @@ void set_dd8(uint16_t value)
 }
 
 //включить/выключить линию on_p = 1...16
-void set_on_p(uint8_t on_p, p_line_state_e state)
+void set_on_p(uint8_t num, p_line_state_e state)
 {
     if(state == P_ON)
         mux_cancel_all();
 
-    switch (on_p) 
+    switch (num) 
     {
         case 1:
             p_outs.lines.p_1 = state;
@@ -131,17 +129,6 @@ void set_on_p(uint8_t on_p, p_line_state_e state)
 
         default: break;
     }
-/*
-    adc_state_e line_state = get_ctrl_out_adc_line_state(on_p);
-    const led_color_t* color;
-
-    if((state&0x3) == 0x01)
-        color = mki_get_color_ptr(MKI_LED_COLOR_BLUE);
-    else
-        color = mki_get_color_ptr(line_state_to_color(line_state)); 
-
-    mki_set_pwm_color(on_p, color);
-*/
 }
 
 p_line_state_e get_on_p(uint8_t on_p)
@@ -184,7 +171,7 @@ void mux_init(void)
 
 bool mux_is_active_line(void)
 {
-    return ((p_outs.data.dd3 & 0x5555) || (p_outs.data.dd8 & 0x5555));
+    return !!((p_outs.data.dd3 & 0x5555) || (p_outs.data.dd8 & 0x5555));
 }
 
 void mux_cancel_all(void)
@@ -193,123 +180,3 @@ void mux_cancel_all(void)
     set_dd8(p_outs.data.dd8 & ~0x5555);
 }
 
-/*
-//включить/выключить линию on_p = 1...16
-void set_on_p(uint8_t on_p, p_line_state_e state)
-{
-    switch (on_p) 
-    {
-        case 1:
-            bitset(&dd3_value, ON_P_1,       !!(state&0x1));
-            bitset(&dd3_value, AWAIT_CTRL_1, !!(state&0x2));
-            set_dd3(dd3_value);
-        break;
-        case 2:
-            bitset(&dd3_value, ON_P_2,       !!(state&0x1));
-            bitset(&dd3_value, AWAIT_CTRL_2, !!(state&0x2));
-            set_dd3(dd3_value);
-        break;
-        case 3:
-            bitset(&dd3_value, ON_P_3,       !!(state&0x1));
-            bitset(&dd3_value, AWAIT_CTRL_3, !!(state&0x2));
-            set_dd3(dd3_value);
-        break;
-        case 4:
-            bitset(&dd3_value, ON_P_4,       !!(state&0x1));
-            bitset(&dd3_value, AWAIT_CTRL_4, !!(state&0x2));
-            set_dd3(dd3_value);
-        break;
-        case 5:
-            bitset(&dd3_value, ON_P_5,       !!(state&0x1));
-            bitset(&dd3_value, AWAIT_CTRL_5, !!(state&0x2));
-            set_dd3(dd3_value);
-        break;
-        case 6:
-            bitset(&dd3_value, ON_P_6,       !!(state&0x1));
-            bitset(&dd3_value, AWAIT_CTRL_6, !!(state&0x2));
-            set_dd3(dd3_value);
-        break;
-        case 7:
-            bitset(&dd3_value, ON_P_7,       !!(state&0x1));
-            bitset(&dd3_value, AWAIT_CTRL_7, !!(state&0x2));
-            set_dd3(dd3_value);
-        break;
-        case 8:
-            bitset(&dd3_value, ON_P_8,       !!(state&0x1));
-            bitset(&dd3_value, AWAIT_CTRL_8, !!(state&0x2));
-            set_dd3(dd3_value);
-        break;
-        case 9:
-            bitset(&dd8_value, ON_P_9,       !!(state&0x1));
-            bitset(&dd8_value, AWAIT_CTRL_9, !!(state&0x2));
-            set_dd8(dd8_value);
-        break;
-        case 10:
-            bitset(&dd8_value, ON_P_10,      !!(state&0x1));
-            bitset(&dd8_value, AWAIT_CTRL_10,!!(state&0x2));
-            set_dd8(dd8_value);
-        break;
-        case 11:
-            bitset(&dd8_value, ON_P_11,      !!(state&0x1));
-            bitset(&dd8_value, AWAIT_CTRL_11,!!(state&0x2));
-            set_dd8(dd8_value);
-        break;
-        case 12:
-            bitset(&dd8_value, ON_P_12,      !!(state&0x1));
-            bitset(&dd8_value, AWAIT_CTRL_12,!!(state&0x2));
-            set_dd8(dd8_value);
-        break;
-        case 13:
-            bitset(&dd8_value, ON_P_13,      !!(state&0x1));
-            bitset(&dd8_value, AWAIT_CTRL_13,!!(state&0x2));
-            set_dd8(dd8_value);
-        break;
-        case 14:
-            bitset(&dd8_value, ON_P_14,      !!(state&0x1));
-            bitset(&dd8_value, AWAIT_CTRL_14,!!(state&0x2));
-            set_dd8(dd8_value);
-        break;
-        case 15:
-            bitset(&dd8_value, ON_P_15,      !!(state&0x1));
-            bitset(&dd8_value, AWAIT_CTRL_15,!!(state&0x2));
-            set_dd8(dd8_value);
-        break;
-        case 16:
-            bitset(&dd8_value, ON_P_16,      !!(state&0x1));
-            bitset(&dd8_value, AWAIT_CTRL_16,!!(state&0x2));
-            set_dd8(dd8_value);
-        break;
-
-        default: break;
-    }
-
-    line_state_e line_state = get_ctrl_out_adc_line_state(on_p);
-    const led_color_t* color;
-
-    if(state&0x1)
-        color = mki_get_color_ptr(MKI_LED_COLOR_BLUE);
-    else
-        color = mki_get_color_ptr(line_state_to_color(line_state)); 
-
-    mki_set_pwm_color(on_p, color);
-}
-*/
-
-/*
-//микросхемы dd3 и dd8
-//установить на мс DD3 и DD8 в ON_P - 0 или 1
-void set_on_p(uint8_t on_p, uint8_t value)
-{
-    if (value) SETBIT(dd3_dd8_value, on_p);
-    else CLRBIT(dd3_dd8_value, on_p);
-
-
-    if (on_p > AWAIT_CTRL_8) set_dd8(dd3_dd8_value >> 16);
-    else set_dd3(dd3_dd8_value & 0xFFFF);
-}
-
-uint8_t get_on_p(uint8_t on_p)
-{
-    return GETBIT(dd3_dd8_value, on_p);
-}
-*/

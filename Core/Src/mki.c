@@ -8,10 +8,8 @@
 #include "mki.h"
 #include "pca9535.h"
 #include "pca9635.h"
-//#include "stm_util.h"
 #include "str_util.h"
 #include "fault.h"
-#include "mux.h"
 #include "local_mic.h"
 #include "local_spk.h"
 #include "ctrl.h"
@@ -35,11 +33,9 @@ const led_color_t  MKI_LED_PWM_LIGHTBLUE = {MKI_LED_COLOR_LIGHTBLUE, 0, 0x3F, 0x
 const led_color_t  MKI_LED_PWM_PURPLE    = {MKI_LED_COLOR_PURPLE, 0x3F,    0, 0xFF};
 const led_color_t  MKI_LED_PWM_WHITE     = {MKI_LED_COLOR_WHITE,  0xFF, 0xFF, 0xFF};
 
-// const led_color_t  MKI_LED_PWM_YELLOW    = {MKI_LED_COLOR_YELLOW, 0xFF, 0xFF,    0};
-
-uint8_t mki_get_led_color(uint8_t number)
+uint8_t mki_get_led_color(uint8_t idx)
 {
-    return mki_leds_color[number];
+    return mki_leds_color[idx];
 }
 
 const led_color_t* mki_get_color_ptr(uint8_t id)
@@ -74,6 +70,116 @@ const led_color_t* mki_get_color_ptr(uint8_t id)
     }
 }
 
+void mki_set_pwm_color(uint8_t number, const led_color_t* color)
+{    
+    mki_leds_color[number-1] = color->id;
+
+    switch (number)
+    {
+        case MKI_LED_1:
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM0,  color->g);
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM1,  color->r);
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM2,  color->b);
+        break; 
+        case MKI_LED_2:
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM3,  color->g);
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM4,  color->r);
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM5,  color->b);
+        break; 
+        case MKI_LED_3:
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM6,  color->g);
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM7,  color->r);
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM8,  color->b);
+        break;
+        case MKI_LED_4:
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM9,  color->g);
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM10, color->r);
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM11, color->b);
+        break;
+        case MKI_LED_5:
+            //перевернут по съеме BRG
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM12, color->b);
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM13, color->r);
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM14, color->g);
+        break;
+        case MKI_LED_6:
+            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM15, color->g);
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM0,  color->r);
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM1,  color->b);
+        break;
+        case MKI_LED_7:
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM2,  color->g);
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM3,  color->r);
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM4,  color->b);
+        break; 
+        case MKI_LED_8:
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM5,  color->g);
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM6,  color->r);
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM7,  color->b);
+        break;
+        case MKI_LED_9:
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM8,  color->g);
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM9,  color->r);
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM10, color->b);
+        break;
+        case MKI_LED_10:
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM11, color->g);
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM12, color->r);
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM13, color->b);
+        break;
+        case MKI_LED_11:
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM14, color->g);
+            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM15, color->r);
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM0,  color->b);
+        break;
+        case MKI_LED_12:
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM1,  color->g);
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM2,  color->r);
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM3,  color->b);
+        break; 
+        case MKI_LED_13: 
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM4,  color->g);
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM5,  color->r);
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM6,  color->b);
+        break; 
+        case MKI_LED_14: 
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM7,  color->g);
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM8,  color->r);
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM9,  color->b);
+        break;
+        case MKI_LED_15:
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM10, color->g);
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM11, color->r);
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM12, color->b);
+        break;
+        case MKI_LED_16:
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM13, color->g);
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM14, color->r);
+            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM15, color->b);
+        break;
+        case MKI_LED_220:
+            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM0,  color->g);
+            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM1,  color->r);
+            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM2,  color->b);
+        break; 
+        case MKI_LED_BAT: 
+            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM3,  color->g);
+            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM4,  color->r);
+            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM5,  color->b);
+        break; 
+        case MKI_LED_AVAR: 
+            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM6,  color->g);
+            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM7,  color->r);
+            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM8,  color->b);
+        break;
+        case MKI_LED_START:
+            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM9,  color->g);
+            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM10, color->r);
+            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM11, color->b);
+        break;
+        default: break;
+    }
+}
 
 /*
 void mki_set_led_color(uint8_t number, uint8_t color)
@@ -233,116 +339,6 @@ void mki_set_led_color(uint8_t number, uint8_t color)
     }
 }
 */
-void mki_set_pwm_color(uint8_t number, const led_color_t* color)
-{    
-    mki_leds_color[number-1] = color->id;
-
-    switch (number)
-    {
-        case MKI_LED_1:
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM0,  color->g);
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM1,  color->r);
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM2,  color->b);
-        break; 
-        case MKI_LED_2:
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM3,  color->g);
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM4,  color->r);
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM5,  color->b);
-        break; 
-        case MKI_LED_3:
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM6,  color->g);
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM7,  color->r);
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM8,  color->b);
-        break;
-        case MKI_LED_4:
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM9,  color->g);
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM10, color->r);
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM11, color->b);
-        break;
-        case MKI_LED_5:
-            //перевернут по съеме BRG
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM12, color->b);
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM13, color->r);
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM14, color->g);
-        break;
-        case MKI_LED_6:
-            PCA9635_write_reg(&led_dd1, PCA9635_REG_PWM15, color->g);
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM0,  color->r);
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM1,  color->b);
-        break;
-        case MKI_LED_7:
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM2,  color->g);
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM3,  color->r);
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM4,  color->b);
-        break; 
-        case MKI_LED_8:
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM5,  color->g);
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM6,  color->r);
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM7,  color->b);
-        break;
-        case MKI_LED_9:
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM8,  color->g);
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM9,  color->r);
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM10, color->b);
-        break;
-        case MKI_LED_10:
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM11, color->g);
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM12, color->r);
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM13, color->b);
-        break;
-        case MKI_LED_11:
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM14, color->g);
-            PCA9635_write_reg(&led_dd2, PCA9635_REG_PWM15, color->r);
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM0,  color->b);
-        break;
-        case MKI_LED_12:
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM1,  color->g);
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM2,  color->r);
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM3,  color->b);
-        break; 
-        case MKI_LED_13: 
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM4,  color->g);
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM5,  color->r);
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM6,  color->b);
-        break; 
-        case MKI_LED_14: 
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM7,  color->g);
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM8,  color->r);
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM9,  color->b);
-        break;
-        case MKI_LED_15:
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM10, color->g);
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM11, color->r);
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM12, color->b);
-        break;
-        case MKI_LED_16:
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM13, color->g);
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM14, color->r);
-            PCA9635_write_reg(&led_dd3, PCA9635_REG_PWM15, color->b);
-        break;
-        case MKI_LED_220:
-            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM0,  color->g);
-            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM1,  color->r);
-            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM2,  color->b);
-        break; 
-        case MKI_LED_BAT: 
-            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM3,  color->g);
-            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM4,  color->r);
-            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM5,  color->b);
-        break; 
-        case MKI_LED_AVAR: 
-            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM6,  color->g);
-            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM7,  color->r);
-            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM8,  color->b);
-        break;
-        case MKI_LED_START:
-            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM9,  color->g);
-            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM10, color->r);
-            PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM11, color->b);
-        break;
-        default: break;
-    }
-}
 
 uint16_t mki_get_key_from_dd(pca9535_t * pca9535)
 {
@@ -365,17 +361,17 @@ void mki_press(uint8_t key)
     ulog_fmt("mki_press %d"CRLF, key);
     if (key <= MKI_KEY_16) 
     {
-        p_line_state_e p_state = get_on_p(key);
-        adc_state_e  adc_state = get_ctrl_out_adc_line_state(key-1);
+        p_line_state_e  p_state = get_line_p_state(key);
+        adc_state_e   adc_state = get_line_adc_state(key);
         if(adc_state == LINE_STATE_BUTTON_PRESS || adc_state == LINE_STATE_DETECTED)
         {
             if(p_state == P_IDLE && !mux_is_active_line())
-                set_on_p(key, P_AWAIT);
+                set_line_p_state(key, P_AWAIT);
             else if(p_state == P_AWAIT && !mux_is_active_line())
-                set_on_p(key, P_ON);
+                set_line_p_state(key, P_ON);
             else if(p_state == ON || p_state == P_ERROR)
             {
-                set_on_p(key, P_IDLE);
+                set_line_p_state(key, P_IDLE);
 
                 local_mic_stop();
                 local_spk_stop();
@@ -491,67 +487,43 @@ void mki_init(void)
         set_fault(FAULT_HARDWARE_ERROR);
     }
 
-    // HAL_Delay(1);
-    PCA9635_write_reg(&led_dd1,  PCA9635_REG_MODE1, 0);
-    // HAL_Delay(1);
-    PCA9635_write_reg(&led_dd1,  PCA9635_REG_MODE2, 0);
-    // HAL_Delay(1);
+    PCA9635_write_reg(&led_dd1, PCA9635_REG_MODE1, 0);
+    PCA9635_write_reg(&led_dd1, PCA9635_REG_MODE2, 0);
     PCA9635_write_reg(&led_dd1, PCA9635_REG_LEDOUT0, 0xAA);
-    // HAL_Delay(1);
     PCA9635_write_reg(&led_dd1, PCA9635_REG_LEDOUT1, 0xAA);
-    // HAL_Delay(1);
     PCA9635_write_reg(&led_dd1, PCA9635_REG_LEDOUT2, 0xAA);
-    // HAL_Delay(1);
     PCA9635_write_reg(&led_dd1, PCA9635_REG_LEDOUT3, 0xAA);
 
 
-    // HAL_Delay(1);
-    PCA9635_write_reg(&led_dd2,  PCA9635_REG_MODE1, 0);
-    // HAL_Delay(1);
-    PCA9635_write_reg(&led_dd2,  PCA9635_REG_MODE2, 0);
-    // HAL_Delay(1);
+    PCA9635_write_reg(&led_dd2, PCA9635_REG_MODE1, 0);
+    PCA9635_write_reg(&led_dd2, PCA9635_REG_MODE2, 0);
     PCA9635_write_reg(&led_dd2, PCA9635_REG_LEDOUT0, 0xAA);
-    // HAL_Delay(1);
     PCA9635_write_reg(&led_dd2, PCA9635_REG_LEDOUT1, 0xAA);
-    // HAL_Delay(1);
     PCA9635_write_reg(&led_dd2, PCA9635_REG_LEDOUT2, 0xAA);
-    // HAL_Delay(1);
     PCA9635_write_reg(&led_dd2, PCA9635_REG_LEDOUT3, 0xAA);
 
 
-    // HAL_Delay(1);
-    PCA9635_write_reg(&led_dd3,  PCA9635_REG_MODE1, 0);
-    // HAL_Delay(1);
-    PCA9635_write_reg(&led_dd3,  PCA9635_REG_MODE2, 0);
-    // HAL_Delay(1);
+    PCA9635_write_reg(&led_dd3, PCA9635_REG_MODE1, 0);
+    PCA9635_write_reg(&led_dd3, PCA9635_REG_MODE2, 0);
     PCA9635_write_reg(&led_dd3, PCA9635_REG_LEDOUT0, 0xAA);
-    // HAL_Delay(1);
     PCA9635_write_reg(&led_dd3, PCA9635_REG_LEDOUT1, 0xAA);
-    // HAL_Delay(1);
     PCA9635_write_reg(&led_dd3, PCA9635_REG_LEDOUT2, 0xAA);
-    // HAL_Delay(1);
     PCA9635_write_reg(&led_dd3, PCA9635_REG_LEDOUT3, 0xAA);
 
-    // HAL_Delay(1);
-    PCA9635_write_reg(&led_dd4,  PCA9635_REG_MODE1, 0);
-    // HAL_Delay(1);
-    PCA9635_write_reg(&led_dd4,  PCA9635_REG_MODE2, 0);
-    // HAL_Delay(1);
+    PCA9635_write_reg(&led_dd4, PCA9635_REG_MODE1, 0);
+    PCA9635_write_reg(&led_dd4, PCA9635_REG_MODE2, 0);
     PCA9635_write_reg(&led_dd4, PCA9635_REG_LEDOUT0, 0xAA);
-    // HAL_Delay(1);
     PCA9635_write_reg(&led_dd4, PCA9635_REG_LEDOUT1, 0xAA);
-    // HAL_Delay(1);
     PCA9635_write_reg(&led_dd4, PCA9635_REG_LEDOUT2, 0xAA);
-    // HAL_Delay(1);
     PCA9635_write_reg(&led_dd4, PCA9635_REG_LEDOUT3, 0xAA);
 
-    for(uint8_t i = MKI_LED_1; i<=MKI_LED_START; i++)
+    for(uint8_t i = MKI_LED_1; i <= MKI_LED_START; i++)
     {
         mki_set_pwm_color(i, &MKI_LED_PWM_BLACK);
     }
 
     // Init of LED colors
-    mki_set_pwm_color(MKI_LED_220,   &MKI_LED_PWM_GREEN);
+    mki_set_pwm_color(MKI_LED_220, &MKI_LED_PWM_GREEN);
 
     pca9535_init(&key_dd5, MKI_I2C_HANDLE, MKI_DD5_ADDERESS);
     if (pca9535_is_ready(&key_dd5) != 0) 

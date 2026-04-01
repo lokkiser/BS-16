@@ -207,10 +207,6 @@ void HAL_DAC_ConvHalfCpltCallbackCh1(DAC_HandleTypeDef *hdac)
     {
         local_mic_dac_HalfCpltCallback();
     }
-    // else if (hdac == LOCAL_SPK_DAC_HANDLE)
-    // {
-    //     local_spk_dac_HalfCpltCallback();
-    // }
 }
 
 void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef *hdac)
@@ -219,10 +215,6 @@ void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef *hdac)
     {
         local_mic_dac_FullCpltCallback();
     }
-    // else if (hdac == LOCAL_SPK_DAC_HANDLE)
-    // {
-    //     local_spk_dac_FullCpltCallback();
-    // }
 }
 
 void HAL_DACEx_ConvHalfCpltCallbackCh2(DAC_HandleTypeDef *hdac)
@@ -254,14 +246,14 @@ uint32_t timers_get_tick(void)
     return HAL_GetTick();
 }
 
-void on_timer_10_msec(void)
+void on_timer_25_msec(void)
 {
+    mki_task();
+    ctrl_task();
 }
 
 void on_timer_50_msec(void)
 {
-    mki_task();
-    ctrl_task();
     memplay_task();
 }
 
@@ -350,27 +342,9 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM15_Init();
   /* USER CODE BEGIN 2 */
-//  __HAL_RCC_I2C1_CLK_ENABLE();
-//  HAL_Delay(10);
-//  __HAL_RCC_I2C1_FORCE_RESET();
-//  HAL_Delay(10);
-//  __HAL_RCC_I2C1_RELEASE_RESET();
-//  HAL_Delay(10);
-//
-//  __HAL_RCC_I2C2_CLK_ENABLE();
-//  HAL_Delay(10);
-//  __HAL_RCC_I2C2_FORCE_RESET();
-//  HAL_Delay(10);
-//  __HAL_RCC_I2C2_RELEASE_RESET();
-//  HAL_Delay(10);
-
 
   HAL_DAC_MspInit(&hdac1); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
   HAL_DAC_MspInit(&hdac2); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
-
-  // HAL_ADC_MspInit(&hadc1);
-  // HAL_ADC_MspInit(&hadc2);
-  // HAL_ADC_MspInit(&hadc5);
 
   HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
   HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
@@ -458,10 +432,8 @@ int main(void)
   akb_init();
   ctrl_init();
 
-  timers_add(on_timer_10_msec,  10);
-  // timers_add(on_timer_50_msec,  50);
-  #warning 30msec
-  timers_add(on_timer_50_msec,  30);
+  timers_add(on_timer_25_msec,  25);
+  timers_add(on_timer_50_msec,  50);
   timers_add(on_timer_250_msec, 250);
   timers_add(on_timer_1_sec,    1000);
   timers_add(on_timer_1_min,    60000);

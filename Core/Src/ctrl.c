@@ -17,31 +17,28 @@
 //какое напряжение мы получаем на делителе.
 //Если там 3.3, то обрыв, 0 кз и в таком духе.
 
-#define CTRL_VOLTAGE_BREAK            2.9f //3.1f
-#define CTRL_VOLTAGE_DETECTED         1.1f //2.6f
-//#define CTRL_VOLTAGE_BUTTON_PRESS        //1.65f
-#define CTRL_VOLTAGE_SHORT_CIRCUIT    0.2f
+// #define CTRL_VOLTAGE_BREAK            2.9f  // 3.1f    
+// #define CTRL_VOLTAGE_DETECTED         1.1f  // 2.6f	 
+// #define CTRL_VOLTAGE_BUTTON_PRESS	 1.65f
+// #define CTRL_VOLTAGE_SHORT_CIRCUIT    0.2f
 
-static uint8_t ctrl_index = 0;
-float ctrl_adc_mic_old[16]    = {0};
-float ctrl_adc_mic_idle[16]   = {0};
-float ctrl_adc_spk[16]        = {0};
+#define CTRL_VOLTAGE_BREAK            3598 
+#define CTRL_VOLTAGE_DETECTED         1365 
+#define CTRL_VOLTAGE_SHORT_CIRCUIT     248
 
+static uint8_t  ctrl_index = 0;
 static uint16_t ctrl_adc1_dma[2] = {0};
 static uint16_t ctrl_adc2_dma[2] = {0};
 
-float ctrl_adc_mic_signal[16] = {0};
+static Obj_line_t lines[16];
 
+static uint16_t ctrl_adc_mic_idle[16]   = {0};
+static uint16_t ctrl_adc_mic_old[16]    = {0};
 
-adc_state_e voltage_out_adc_to_line_state(float volt)
-{
-    if      (volt > CTRL_VOLTAGE_BREAK)      	return LINE_STATE_BREAK;
-    else if (volt > CTRL_VOLTAGE_DETECTED)      return LINE_STATE_DETECTED;
-    else if (volt > CTRL_VOLTAGE_SHORT_CIRCUIT) return LINE_STATE_BUTTON_PRESS;
-    else                                        return LINE_STATE_SHORT_CIRCUIT;
-}
+static uint16_t ctrl_adc_spk[16]        = {0};
+static uint16_t ctrl_adc_mic_signal[16] = {0};
 
-uint8_t line_state_to_color(adc_state_e line_state)
+static uint8_t line_state_to_color(adc_state_e line_state)
 {
     switch (line_state) 
     {
@@ -53,12 +50,15 @@ uint8_t line_state_to_color(adc_state_e line_state)
     }
 }
 
-adc_state_e get_ctrl_out_adc_line_state(uint8_t number)
+static adc_state_e adc_to_state(uint16_t value) 
 {
-    return voltage_out_adc_to_line_state(ctrl_adc_mic_idle[number]);
+    if      (value > CTRL_VOLTAGE_BREAK)      	 return LINE_STATE_BREAK;
+    else if (value > CTRL_VOLTAGE_DETECTED)      return LINE_STATE_DETECTED;
+    else if (value > CTRL_VOLTAGE_SHORT_CIRCUIT) return LINE_STATE_BUTTON_PRESS;
+    else                                         return LINE_STATE_SHORT_CIRCUIT;
 }
 
-float ctrl_adc_to_voltage(uint16_t value)
+static float ctrl_adc_to_voltage(uint16_t value)
 {
     return 3.3f * (float)value / 4095.0f;
 }
@@ -85,42 +85,37 @@ void ctrl_FullCpltCallback(ADC_HandleTypeDef* hadc)
     if (hadc == &hadc1) 
     {
         ctrl_adc_mic_old[ctrl_index]  = ctrl_adc_mic_idle[ctrl_index];
-        ctrl_adc_mic_idle[ctrl_index] = ctrl_adc_to_voltage(ctrl_adc1_dma[0]);
+        ctrl_adc_mic_idle[ctrl_index] = ctrl_adc1_dma[0];
 
-        //adc_sound_buf[0] = (mux_is_active_line()) ? ctrl_adc1_dma[1] : 0;
-        ctrl_adc_mic_signal[ctrl_index] = ctrl_adc_to_voltage(ctrl_adc1_dma[1]);
-
-        //fulog_fmt("a1.1:%d a1.3:%d"CRLF, ctrl_adc1_dma[0], ctrl_adc1_dma[1]);
+        ctrl_adc_mic_signal[ctrl_index] = ctrl_adc1_dma[1];
     }
     else if (hadc == &hadc2) 
     {
-        ctrl_adc_spk[ctrl_index] = ctrl_adc_to_voltage(ctrl_adc2_dma[0]);
-        // ctrl_adc_spk[8 + ctrl_index] = ctrl_adc_to_voltage(ctrl_adc3_dma[1]);
-        
-        //fulog_fmt("a3.2:%d a3.6:%d"CRLF, ctrl_adc3_dma[0], ctrl_adc3_dma[1]);
+        ctrl_adc_spk[ctrl_index] = ctrl_adc2_dma[0];
     }
 }
 
-void ctrl_button_press(uint8_t num)
+static Obj_line_t* get_line_obj_ptr(uint8_t num)
+{
+	return (lines[num-1].num == num) ? &lines[num-1] : NULL;
+}
+
+static void ctrl_button_press(uint8_t num)
 {
     ulog_fmt("ctrl: VP button press %d"CRLF, num);
 
 	if(get_on_p(num) != P_ON)
-    	set_on_p(num, P_AWAIT);
+		set_line_p_state(num, P_AWAIT);
 }
 
-/*
-void ctrl_button_unpress(uint8_t index)
+static void set_line_led_color(uint8_t num, uint8_t color_id)
 {
-}
-*/
-
-static void ctrl_led_front(uint8_t idx, uint8_t color_id)
-{
-	if (mki_get_led_color(idx) != color_id)
-    {
-        mki_set_pwm_color(idx+1, mki_get_color_ptr(color_id));
-    }
+	if (mki_get_led_color(num-1) != color_id)
+	{
+	   mki_set_pwm_color(num, mki_get_color_ptr(color_id));
+	}
+	get_line_obj_ptr(num)->color_id = color_id;
+    // lines[num-1].color_id = color_id;
 }
 
 void ctrl_task(void)
@@ -140,10 +135,14 @@ void ctrl_task(void)
 
     HAL_Delay(1); // Чтобы точно завершить обработку прерываний
 
-    adc_state_e     adc_state = get_ctrl_out_adc_line_state(ctrl_index);
-    p_line_state_e line_state = get_on_p(ctrl_index+1);
+    Obj_line_t* cur_line = &lines[ctrl_index];
 
-    switch(adc_state)
+    cur_line->adc_state 	= adc_to_state(ctrl_adc_mic_idle[ctrl_index]);
+    cur_line->adc_state_old = adc_to_state(ctrl_adc_mic_old [ctrl_index]);
+    cur_line->p_state       = get_on_p(cur_line->num);
+    cur_line->color_id      = mki_get_led_color(ctrl_index);
+
+    switch(cur_line->adc_state)
     {
     	case LINE_STATE_BREAK:
     	case LINE_STATE_SHORT_CIRCUIT:
@@ -151,39 +150,39 @@ void ctrl_task(void)
     	break;
     
     	case LINE_STATE_DETECTED:
-    		if(line_state == P_ERROR)
-				set_on_p(ctrl_index+1, P_IDLE);
+		if(cur_line->p_state == P_ERROR)
+			set_line_p_state(cur_line->num, P_IDLE);
     	break;
 
     	case LINE_STATE_BUTTON_PRESS:
-        if( (voltage_out_adc_to_line_state(ctrl_adc_mic_old[ctrl_index]) != LINE_STATE_BUTTON_PRESS)
-         && (line_state == P_IDLE) )
+        if( (cur_line->adc_state_old != LINE_STATE_BUTTON_PRESS)
+         && (cur_line->p_state == P_IDLE) )
         {
-            ctrl_button_press(ctrl_index+1);
+            ctrl_button_press(cur_line->num);
         }
     	break;
 
     	default: break;
     }
 
-    switch(get_on_p(ctrl_index+1))
+    switch(cur_line->p_state)
     {
     	default:
     	case P_ERROR:
-			ctrl_led_front(ctrl_index, MKI_LED_COLOR_RED);
+			set_line_led_color(cur_line->num, MKI_LED_COLOR_RED);
 		break;
 
     	case P_IDLE:
-	    	const uint8_t color_id = line_state_to_color(adc_state);
-	    	ctrl_led_front(ctrl_index, color_id);
+	    	const uint8_t new_color_id = line_state_to_color(cur_line->adc_state);
+	    	set_line_led_color(cur_line->num, new_color_id);
     	break;
 
     	case P_AWAIT:
-    		ctrl_led_front(ctrl_index, MKI_LED_COLOR_LIGHTBLUE);
+    		set_line_led_color(cur_line->num, MKI_LED_COLOR_LIGHTBLUE);
     	break;
 
     	case P_ON:
-    		ctrl_led_front(ctrl_index, MKI_LED_COLOR_BLUE);
+    		set_line_led_color(cur_line->num, MKI_LED_COLOR_BLUE);
 		break;
     }
 
@@ -213,15 +212,34 @@ void ctrl_task(void)
     ctrl_index++;
     ctrl_index %= 16;
 
-    set_adc_line(ctrl_index);
+    set_mux_line(ctrl_index);
 }
 
 void ctrl_init(void)
 {
-    ctrl_index = 0;
-    set_adc_line(ctrl_index);
+	for(uint8_t i = 0; i < 16; i++)
+	{
+		lines[i].num = i+1;
+		lines[i].color_id = MKI_LED_COLOR_BLACK;
+		lines[i].p_state  = P_IDLE;
+	}
 
-    //HAL_ADC_Start(&hadc2);
-    // HAL_DAC_Start(&hdac2, DAC_CHANNEL_1);
-    #warning TODO
+    ctrl_index = 0;
+    set_mux_line(ctrl_index);
+}
+
+void set_line_p_state(uint8_t num, p_line_state_e state)
+{
+	get_line_obj_ptr(num)->p_state = state;
+	set_on_p(num, state);
+}
+
+p_line_state_e get_line_p_state(uint8_t num)
+{
+	return get_line_obj_ptr(num)->p_state;
+}
+
+adc_state_e get_line_adc_state(uint8_t num)
+{
+	return get_line_obj_ptr(num)->adc_state;
 }

@@ -51,7 +51,8 @@ typedef struct
     uint8_t color_id;
 
     bool isMissed;
-
+    bool isConfigured; 
+    #warning TODO
 } Obj_line_t;
 #pragma pack()
 

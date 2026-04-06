@@ -43,7 +43,7 @@ static uint8_t line_state_to_color(adc_state_e line_state)
 {
     switch (line_state) 
     {
-        case LINE_STATE_BREAK:         return MKI_LED_COLOR_BLACK;
+        case LINE_STATE_BREAK:         return MKI_LED_COLOR_ORANGE;
         case LINE_STATE_DETECTED:      return MKI_LED_COLOR_GREEN;
         case LINE_STATE_BUTTON_PRESS:  return MKI_LED_COLOR_GREEN; // MKI_LED_COLOR_LIGHTBLUE;
         case LINE_STATE_SHORT_CIRCUIT: return MKI_LED_COLOR_ORANGE;
@@ -141,93 +141,96 @@ void ctrl_task(void)
 
     Obj_line_t* cur_line = &lines[ctrl_index];
 
-    cur_line->adc_state 	 = adc_to_state(ctrl_adc_mic_idle[ctrl_index]);
-    cur_line->adc_state_last = adc_to_state(ctrl_adc_mic_last[ctrl_index]);
-    cur_line->adc_state_old  = adc_to_state(ctrl_adc_mic_old [ctrl_index]);
-    cur_line->p_state        = get_on_p(cur_line->num);
-    cur_line->color_id       = mki_get_led_color(ctrl_index);
-
-    if(isTimerExpired(&cur_line->timer, 10000))
+    #warning TODO
+    if(cur_line->isConfigured)
     {
-        cur_line->isMissed = true;
-        set_line_p_state(cur_line->num, P_IDLE);
-    }
+        
+        cur_line->adc_state 	 = adc_to_state(ctrl_adc_mic_idle[ctrl_index]);
+        cur_line->adc_state_last = adc_to_state(ctrl_adc_mic_last[ctrl_index]);
+        cur_line->adc_state_old  = adc_to_state(ctrl_adc_mic_old [ctrl_index]);
+        cur_line->p_state        = get_on_p(cur_line->num);
+        cur_line->color_id       = mki_get_led_color(ctrl_index);
 
-    switch(cur_line->adc_state)
-    {
-    	case LINE_STATE_BREAK:
-    	case LINE_STATE_SHORT_CIRCUIT:
-    		
-    	break;
-    
-    	case LINE_STATE_DETECTED:
-		if(cur_line->p_state == P_ERROR)
-			set_line_p_state(cur_line->num, P_IDLE);
-    	break;
-
-    	case LINE_STATE_BUTTON_PRESS:
-        if( (cur_line->adc_state_old  != LINE_STATE_BUTTON_PRESS)
-         && (cur_line->adc_state_last == LINE_STATE_BUTTON_PRESS)
-         && (cur_line->p_state == P_IDLE) 
-          )
+        if(isTimerExpired(&cur_line->timer, 10000))
         {
-            ctrl_button_press(cur_line->num);
+            cur_line->isMissed = true;
+            set_line_p_state(cur_line->num, P_IDLE);
         }
-    	break;
 
-    	default: break;
-    }
+        switch(cur_line->adc_state)
+        {
+        	case LINE_STATE_BREAK:
+        	case LINE_STATE_SHORT_CIRCUIT:
+        		
+        	break;
+        
+        	case LINE_STATE_DETECTED:
+    		if(cur_line->p_state == P_ERROR)
+    			set_line_p_state(cur_line->num, P_IDLE);
+        	break;
 
-    switch(cur_line->p_state)
-    {
-    	default:
-    	case P_ERROR:
-			set_line_led_color(cur_line->num, MKI_LED_COLOR_WHITE);
-		break;
-
-    	case P_IDLE:
-            if(cur_line->isMissed)
+        	case LINE_STATE_BUTTON_PRESS:
+            if( (cur_line->adc_state_old  != LINE_STATE_BUTTON_PRESS)
+             && (cur_line->adc_state_last == LINE_STATE_BUTTON_PRESS)
+             && (cur_line->p_state == P_IDLE) 
+              )
             {
-                set_line_led_color(cur_line->num, MKI_LED_COLOR_RED);
+                ctrl_button_press(cur_line->num);
             }
-            else
-            {
-    	    	const uint8_t new_color_id = line_state_to_color(cur_line->adc_state);
-    	    	set_line_led_color(cur_line->num, new_color_id);
-            }
-    	break;
+        	break;
 
-    	case P_AWAIT:
-    		set_line_led_color(cur_line->num, MKI_LED_COLOR_LIGHTBLUE);
-    	break;
+        	default: break;
+        }
 
-    	case P_ON:
-    		set_line_led_color(cur_line->num, MKI_LED_COLOR_BLUE);
-		break;
+        switch(cur_line->p_state)
+        {
+        	default:
+        	case P_ERROR:
+    			set_line_led_color(cur_line->num, MKI_LED_COLOR_WHITE);
+    		break;
+
+        	case P_IDLE:
+                if(cur_line->isMissed)
+                {
+                    set_line_led_color(cur_line->num, MKI_LED_COLOR_RED);
+                }
+                else
+                {
+        	    	const uint8_t new_color_id = line_state_to_color(cur_line->adc_state);
+        	    	set_line_led_color(cur_line->num, new_color_id);
+                }
+        	break;
+
+        	case P_AWAIT:
+        		set_line_led_color(cur_line->num, MKI_LED_COLOR_LIGHTBLUE);
+        	break;
+
+        	case P_ON:
+        		set_line_led_color(cur_line->num, MKI_LED_COLOR_BLUE);
+    		break;
+        }
+
+        if (ctrl_adc_mic_idle[ctrl_index] < CTRL_VOLTAGE_SHORT_CIRCUIT) 
+            set_fault(FAULT_OUT_ADC1_KZ + ctrl_index);
+        else if (ctrl_adc_mic_idle[ctrl_index] > CTRL_VOLTAGE_BREAK) 
+            set_fault(FAULT_OUT_ADC1_OBRIV + ctrl_index);
+        else 
+        {
+            unset_fault(FAULT_OUT_ADC1_KZ + ctrl_index);
+            unset_fault(FAULT_OUT_ADC1_OBRIV + ctrl_index);
+        }
+
+        if (ctrl_adc_spk[ctrl_index] < CTRL_VOLTAGE_SHORT_CIRCUIT) 
+            set_fault(FAULT_P_OUT_1_KZ + ctrl_index);
+        else if (ctrl_adc_spk[ctrl_index] > 1862) 
+            set_fault(FAULT_P_OUT_1_OBRIV + ctrl_index);
+        else 
+        {
+            unset_fault(FAULT_P_OUT_1_KZ + ctrl_index);
+            unset_fault(FAULT_P_OUT_1_OBRIV + ctrl_index);
+        }
     }
 
-    //OUT_ADC  3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2
-    //P_OUT    2.7, 2.7, 2.7, 2.7, 1.6, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.4, 2.7, 2.7, 2.7
-
-    if (ctrl_adc_mic_idle[ctrl_index] < CTRL_VOLTAGE_SHORT_CIRCUIT) 
-        set_fault(FAULT_OUT_ADC1_KZ + ctrl_index);
-    else if (ctrl_adc_mic_idle[ctrl_index] > CTRL_VOLTAGE_BREAK) 
-        set_fault(FAULT_OUT_ADC1_OBRIV + ctrl_index);
-    else 
-    {
-        unset_fault(FAULT_OUT_ADC1_KZ + ctrl_index);
-        unset_fault(FAULT_OUT_ADC1_OBRIV + ctrl_index);
-    }
-
-    if (ctrl_adc_spk[ctrl_index] < CTRL_VOLTAGE_SHORT_CIRCUIT) 
-        set_fault(FAULT_P_OUT_1_KZ + ctrl_index);
-    else if (ctrl_adc_spk[ctrl_index] > 1862) 
-        set_fault(FAULT_P_OUT_1_OBRIV + ctrl_index);
-    else 
-    {
-        unset_fault(FAULT_P_OUT_1_KZ + ctrl_index);
-        unset_fault(FAULT_P_OUT_1_OBRIV + ctrl_index);
-    }
 
     ctrl_index++;
     ctrl_index %= 16;
@@ -242,7 +245,13 @@ void ctrl_init(void)
 		lines[i].num = i+1;
 		lines[i].color_id = MKI_LED_COLOR_BLACK;
 		lines[i].p_state  = P_IDLE;
+
+        // #warning hardcoded
+        // lines[i].isConfigured = true;
 	}
+
+    #warning hardcoded
+    lines[0].isConfigured = true;
 
     ctrl_index = 0;
     set_mux_line(ctrl_index);

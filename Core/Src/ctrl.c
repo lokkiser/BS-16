@@ -33,6 +33,7 @@ static uint16_t ctrl_adc2_dma[2] = {0};
 static Obj_line_t lines[16];
 
 static uint16_t ctrl_adc_mic_idle[16]   = {0};
+static uint16_t ctrl_adc_mic_last[16]   = {0};
 static uint16_t ctrl_adc_mic_old[16]    = {0};
 
 static uint16_t ctrl_adc_spk[16]        = {0};
@@ -44,7 +45,7 @@ static uint8_t line_state_to_color(adc_state_e line_state)
     {
         case LINE_STATE_BREAK:         return MKI_LED_COLOR_BLACK;
         case LINE_STATE_DETECTED:      return MKI_LED_COLOR_GREEN;
-        case LINE_STATE_BUTTON_PRESS:  return MKI_LED_COLOR_LIGHTBLUE;
+        case LINE_STATE_BUTTON_PRESS:  return MKI_LED_COLOR_GREEN; // MKI_LED_COLOR_LIGHTBLUE;
         case LINE_STATE_SHORT_CIRCUIT: return MKI_LED_COLOR_ORANGE;
         default:                       return MKI_LED_COLOR_BLACK;
     }
@@ -84,7 +85,8 @@ void ctrl_FullCpltCallback(ADC_HandleTypeDef* hadc)
 {
     if (hadc == &hadc1) 
     {
-        ctrl_adc_mic_old[ctrl_index]  = ctrl_adc_mic_idle[ctrl_index];
+        ctrl_adc_mic_old[ctrl_index]  = ctrl_adc_mic_last[ctrl_index];
+        ctrl_adc_mic_last[ctrl_index] = ctrl_adc_mic_idle[ctrl_index];
         ctrl_adc_mic_idle[ctrl_index] = ctrl_adc1_dma[0];
 
         ctrl_adc_mic_signal[ctrl_index] = ctrl_adc1_dma[1];
@@ -139,10 +141,11 @@ void ctrl_task(void)
 
     Obj_line_t* cur_line = &lines[ctrl_index];
 
-    cur_line->adc_state 	= adc_to_state(ctrl_adc_mic_idle[ctrl_index]);
-    cur_line->adc_state_old = adc_to_state(ctrl_adc_mic_old [ctrl_index]);
-    cur_line->p_state       = get_on_p(cur_line->num);
-    cur_line->color_id      = mki_get_led_color(ctrl_index);
+    cur_line->adc_state 	 = adc_to_state(ctrl_adc_mic_idle[ctrl_index]);
+    cur_line->adc_state_last = adc_to_state(ctrl_adc_mic_last[ctrl_index]);
+    cur_line->adc_state_old  = adc_to_state(ctrl_adc_mic_old [ctrl_index]);
+    cur_line->p_state        = get_on_p(cur_line->num);
+    cur_line->color_id       = mki_get_led_color(ctrl_index);
 
     if(isTimerExpired(&cur_line->timer, 10000))
     {
@@ -163,8 +166,10 @@ void ctrl_task(void)
     	break;
 
     	case LINE_STATE_BUTTON_PRESS:
-        if( (cur_line->adc_state_old != LINE_STATE_BUTTON_PRESS)
-         && (cur_line->p_state == P_IDLE) )
+        if( (cur_line->adc_state_old  != LINE_STATE_BUTTON_PRESS)
+         && (cur_line->adc_state_last == LINE_STATE_BUTTON_PRESS)
+         && (cur_line->p_state == P_IDLE) 
+          )
         {
             ctrl_button_press(cur_line->num);
         }
@@ -216,7 +221,7 @@ void ctrl_task(void)
 
     if (ctrl_adc_spk[ctrl_index] < CTRL_VOLTAGE_SHORT_CIRCUIT) 
         set_fault(FAULT_P_OUT_1_KZ + ctrl_index);
-    else if (ctrl_adc_spk[ctrl_index] > 1.5f) 
+    else if (ctrl_adc_spk[ctrl_index] > 1862) 
         set_fault(FAULT_P_OUT_1_OBRIV + ctrl_index);
     else 
     {

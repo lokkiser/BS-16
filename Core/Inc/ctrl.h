@@ -43,6 +43,7 @@ typedef struct
     timer_t  timer;
     
     adc_state_e    adc_state;
+    adc_state_e    adc_state_last;
     adc_state_e    adc_state_old;
     p_line_state_e p_state;
 

@@ -65,7 +65,7 @@ unsigned int memplay_input_read(void * file, void * read_start, unsigned int rea
 //buffer
 static lwrb_t memplay_buffer = {0};
 
-void memplay_mad2buf(void)
+static void memplay_mad2buf(void)
 {
 	int rc;
 	int16_t pcm16[MAX_MAD_PCM_SIZE];
@@ -129,7 +129,7 @@ void memplay_stop(void)
 	memplay_on_stop();
 }
 
-void memplay_buf2dma(uint8_t index)
+static void memplay_buf2dma(uint8_t index)
 {
 	int rc, i;
 
@@ -238,7 +238,7 @@ static dynamic_buf_t memplay_buf = DYNAMIC_BUF_STATIC_INIT(MAX_MAD_PCM_SIZE * 5)
 static mad_data_t * pmad_data = NULL;
 
 
-void memplay_stop(void)
+static void memplay_stop(void)
 {
 	if (memplay_size) {
 		ulog("memplay: abort"CRLF);
@@ -260,7 +260,7 @@ void memplay_stop(void)
 
 
 
-void memplay_buf2dma(void)
+static void memplay_buf2dma(void)
 {
 	int i;
 	size_t data_len;
@@ -278,7 +278,7 @@ void memplay_buf2dma(void)
 }
 
 
-void memplay_mad2buf(void)
+static void memplay_mad2buf(void)
 {
 	int rc;
 	int16_t pcm16[MAX_MAD_PCM_SIZE];

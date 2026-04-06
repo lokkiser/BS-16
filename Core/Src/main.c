@@ -22,13 +22,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <string.h>
 #include "stm_util.h"
 #include "mki.h"
 #include "mux.h"
 #include "console.h"
 #include "rtc.h"
-#include "timer_util.h"
 #include "local_mic.h"
 #include "local_spk.h"
 #include "ctrl.h"
@@ -240,12 +238,12 @@ void HAL_DAC_ErrorCallbackCh1(DAC_HandleTypeDef *hdac)
 void HAL_DACEx_ErrorCallbackCh2(DAC_HandleTypeDef *hdac)
 {
 }
-
+/*
 uint32_t timers_get_tick(void)
 {
     return HAL_GetTick();
 }
-
+*/
 void on_timer_25_msec(void)
 {
     mki_task();
@@ -350,7 +348,6 @@ int main(void)
   HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
 
   set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
- // set_tim_frequency2(&htim8,  BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
  // HAL_TIM_Base_Start(&htim15);
 
   HAL_Delay(1000);
@@ -420,9 +417,9 @@ int main(void)
       save_setting();
   }
   else if ( ((globalRTC_Time.year < 26) || (globalRTC_Time.year > 40)) ||
-          !MONTH_GOD(globalRTC_Time.month) ||
-          !DATE_GOD(globalRTC_Time.day) ||
-          !HOUR_GOD(globalRTC_Time.hours) ||
+          !MONTH_GOD(globalRTC_Time.month)    ||
+          !DATE_GOD(globalRTC_Time.day)       ||
+          !HOUR_GOD(globalRTC_Time.hours)     ||
           !MINUTE_GOD(globalRTC_Time.minutes) ||
           !SECOND_GOD(globalRTC_Time.seconds) )
   {
@@ -432,11 +429,20 @@ int main(void)
   akb_init();
   ctrl_init();
 
-  timers_add(on_timer_25_msec,  25);
-  timers_add(on_timer_50_msec,  50);
-  timers_add(on_timer_250_msec, 250);
-  timers_add(on_timer_1_sec,    1000);
-  timers_add(on_timer_1_min,    60000);
+  static timer_t timer_25_msec;
+  startTimer(&timer_25_msec);
+
+  static timer_t timer_50_msec;
+  startTimer(&timer_50_msec);
+
+  static timer_t timer_250_msec;
+  startTimer(&timer_250_msec);
+
+  static timer_t timer_1_sec;
+  startTimer(&timer_1_sec);
+
+  static timer_t timer_1_min;
+  startTimer(&timer_1_min);
 
   filelog("Перезагрузка"CRLF);
 
@@ -456,7 +462,20 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-      timers_task();
+    if(isTimerExpired(&timer_1_min,  60000))
+      on_timer_1_min();
+
+    if(isTimerExpired(&timer_1_sec,   1000))
+      on_timer_1_sec();
+
+    if(isTimerExpired(&timer_250_msec, 250))
+      on_timer_250_msec();
+
+    if(isTimerExpired(&timer_50_msec,   50))
+      on_timer_50_msec();
+
+    if(isTimerExpired(&timer_25_msec,   25))
+      on_timer_25_msec();
   }
   /* USER CODE END 3 */
 }
@@ -1181,7 +1200,7 @@ static void MX_TIM15_Init(void)
   htim15.Instance = TIM15;
   htim15.Init.Prescaler = 0;
   htim15.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim15.Init.Period = 65535;
+  htim15.Init.Period = 8999;
   htim15.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim15.Init.RepetitionCounter = 0;
   htim15.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;

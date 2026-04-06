@@ -105,7 +105,10 @@ static void ctrl_button_press(uint8_t num)
     ulog_fmt("ctrl: VP button press %d"CRLF, num);
 
 	if(get_on_p(num) != P_ON)
+    {
 		set_line_p_state(num, P_AWAIT);
+        startSingleShotTimer(&get_line_obj_ptr(num)->timer);
+    }
 }
 
 static void set_line_led_color(uint8_t num, uint8_t color_id)
@@ -115,7 +118,6 @@ static void set_line_led_color(uint8_t num, uint8_t color_id)
 	   mki_set_pwm_color(num, mki_get_color_ptr(color_id));
 	}
 	get_line_obj_ptr(num)->color_id = color_id;
-    // lines[num-1].color_id = color_id;
 }
 
 void ctrl_task(void)
@@ -141,6 +143,12 @@ void ctrl_task(void)
     cur_line->adc_state_old = adc_to_state(ctrl_adc_mic_old [ctrl_index]);
     cur_line->p_state       = get_on_p(cur_line->num);
     cur_line->color_id      = mki_get_led_color(ctrl_index);
+
+    if(isTimerExpired(&cur_line->timer, 10000))
+    {
+        cur_line->isMissed = true;
+        set_line_p_state(cur_line->num, P_IDLE);
+    }
 
     switch(cur_line->adc_state)
     {
@@ -169,12 +177,19 @@ void ctrl_task(void)
     {
     	default:
     	case P_ERROR:
-			set_line_led_color(cur_line->num, MKI_LED_COLOR_RED);
+			set_line_led_color(cur_line->num, MKI_LED_COLOR_WHITE);
 		break;
 
     	case P_IDLE:
-	    	const uint8_t new_color_id = line_state_to_color(cur_line->adc_state);
-	    	set_line_led_color(cur_line->num, new_color_id);
+            if(cur_line->isMissed)
+            {
+                set_line_led_color(cur_line->num, MKI_LED_COLOR_RED);
+            }
+            else
+            {
+    	    	const uint8_t new_color_id = line_state_to_color(cur_line->adc_state);
+    	    	set_line_led_color(cur_line->num, new_color_id);
+            }
     	break;
 
     	case P_AWAIT:
@@ -186,8 +201,8 @@ void ctrl_task(void)
 		break;
     }
 
-    //OUT_ADC 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2
-    //P_OUT      2.7, 2.7, 2.7, 2.7, 1.6, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.4, 2.7, 2.7, 2.7
+    //OUT_ADC  3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2
+    //P_OUT    2.7, 2.7, 2.7, 2.7, 1.6, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.4, 2.7, 2.7, 2.7
 
     if (ctrl_adc_mic_idle[ctrl_index] < CTRL_VOLTAGE_SHORT_CIRCUIT) 
         set_fault(FAULT_OUT_ADC1_KZ + ctrl_index);
@@ -230,8 +245,16 @@ void ctrl_init(void)
 
 void set_line_p_state(uint8_t num, p_line_state_e state)
 {
-	get_line_obj_ptr(num)->p_state = state;
+	Obj_line_t* line = get_line_obj_ptr(num);
+
+    line->p_state = state;
 	set_on_p(num, state);
+
+    if(state != P_IDLE)
+    {
+        stopTimer(&line->timer);
+        line->isMissed = false;
+    } 
 }
 
 p_line_state_e get_line_p_state(uint8_t num)

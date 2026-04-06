@@ -29,14 +29,14 @@ typedef struct
 #define MKI_DD6_ADDERESS    (0x21)
 
 
-#define MKI_LED_COLOR_BLACK         0 //0x00
-#define MKI_LED_COLOR_GREEN         1 //0x01
-#define MKI_LED_COLOR_BLUE          2 //0x02
-#define MKI_LED_COLOR_LIGHTBLUE     3 //0x03
-#define MKI_LED_COLOR_RED           4 //0x04
-#define MKI_LED_COLOR_ORANGE        5 //0x05
-#define MKI_LED_COLOR_PURPLE        6 //0x06
-#define MKI_LED_COLOR_WHITE         7 //0x07
+#define MKI_LED_COLOR_BLACK         0 
+#define MKI_LED_COLOR_GREEN         1 
+#define MKI_LED_COLOR_BLUE          2 
+#define MKI_LED_COLOR_LIGHTBLUE     3 
+#define MKI_LED_COLOR_RED           4 
+#define MKI_LED_COLOR_ORANGE        5 
+#define MKI_LED_COLOR_PURPLE        6 
+#define MKI_LED_COLOR_WHITE         7 
 
 #define MKI_LED_1                   1
 #define MKI_LED_2                   2

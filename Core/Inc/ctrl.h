@@ -31,7 +31,7 @@
 
 typedef enum 
 {
-    LINE_STATE_BREAK     = 0, //обрыв
+    LINE_STATE_BREAK    = 0,  //обрыв
 	LINE_STATE_DETECTED, 	  //ВП найдено
 	LINE_STATE_BUTTON_PRESS,  //ВП нажата кнопка
 	LINE_STATE_SHORT_CIRCUIT  //КЗ
@@ -49,12 +49,12 @@ typedef struct
     uint8_t num;
     uint8_t color_id;
 
+    bool isMissed;
+
 } Obj_line_t;
 #pragma pack()
 
 
-// adc_state_e adc_to_state(uint16_t value);
-// uint8_t line_state_to_color(adc_state_e adc_state);
 adc_state_e get_line_adc_state(uint8_t num);
 
 void set_line_p_state(uint8_t num, p_line_state_e state);

@@ -22,9 +22,9 @@
 // #define CTRL_VOLTAGE_BUTTON_PRESS	 1.65f
 // #define CTRL_VOLTAGE_SHORT_CIRCUIT    0.2f
 
-#define CTRL_VOLTAGE_BREAK            3598 
+#define CTRL_VOLTAGE_BREAK            3600 
 #define CTRL_VOLTAGE_DETECTED         1365 
-#define CTRL_VOLTAGE_SHORT_CIRCUIT     248
+#define CTRL_VOLTAGE_SHORT_CIRCUIT     128 //248
 
 static uint8_t  ctrl_index = 0;
 static uint16_t ctrl_adc1_dma[2] = {0};

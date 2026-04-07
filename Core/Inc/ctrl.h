@@ -9,7 +9,6 @@
 #define CORE_INC_CTRL_H_
 
 #include "main.h"
-#include "timer.h"
 #include "mux.h"
 
 #define LINE_NUM_1    1

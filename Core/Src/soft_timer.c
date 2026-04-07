@@ -1,4 +1,4 @@
-#include "timer.h"
+#include "soft_timer.h"
 
 
 void initTimer(timer_t* p)

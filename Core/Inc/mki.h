@@ -59,7 +59,6 @@ typedef struct
 #define MKI_LED_AVAR                19
 #define MKI_LED_START               20
 
-
 #define MKI_KEY_1                   1
 #define MKI_KEY_2                   2
 #define MKI_KEY_3                   3
@@ -79,6 +78,20 @@ typedef struct
 #define MKI_KEY_KONEC_SVAZI         17
 #define MKI_KEY_ZVUKOVOI_VIZOV      18
 
+typedef enum
+{
+    KEY_IDLE = 0,
+    KEY_PRESSED,
+    KEY_LONG_PRESSED,
+} key_states_e;
+
+typedef struct
+{
+    // timer_t      timer;
+    key_states_e state;
+    uint8_t         id;
+} key_t;
+
 uint8_t mki_get_led_color(uint8_t number);
 void mki_set_pwm_color(uint8_t number, const led_color_t* color);
 const led_color_t* mki_get_color_ptr(uint8_t id);
@@ -86,8 +99,8 @@ const led_color_t* mki_get_color_ptr(uint8_t id);
 void mki_init(void);
 void mki_unpress(uint8_t key);
 void mki_press(uint8_t key);
+void mki_long_press(uint8_t key);
 void mki_task(void);
-
 
 void mki_test(void);
 

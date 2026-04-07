@@ -20,9 +20,10 @@ static pca9535_t key_dd5 = {0}, key_dd6 = {0};
 //Для прерываний INT
 uint32_t dd5_change_tick = 0, dd6_change_tick = 0;
 
+static key_t    keys[18] = {0};
 static uint8_t  mki_leds_color[20] = {0};
 // static uint8_t  mki_leds_pwm[20]   = {0};
-static uint16_t mki_keys[2] = {0xFFFF, 0xFFFF};
+static uint16_t raw_keys[2] = {0xFFFF, 0xFFFF};
 
 const led_color_t  MKI_LED_PWM_BLACK     = {MKI_LED_COLOR_BLACK,     0,    0,    0};
 const led_color_t  MKI_LED_PWM_RED       = {MKI_LED_COLOR_RED,    0xFF,    0,    0};
@@ -32,6 +33,11 @@ const led_color_t  MKI_LED_PWM_ORANGE    = {MKI_LED_COLOR_ORANGE, 0xFF, 0x1F,   
 const led_color_t  MKI_LED_PWM_LIGHTBLUE = {MKI_LED_COLOR_LIGHTBLUE, 0, 0x3F, 0x3F};
 const led_color_t  MKI_LED_PWM_PURPLE    = {MKI_LED_COLOR_PURPLE, 0x3F,    0, 0xFF};
 const led_color_t  MKI_LED_PWM_WHITE     = {MKI_LED_COLOR_WHITE,  0xFF, 0xFF, 0xFF};
+
+static key_t* get_key_ptr(uint8_t key)
+{
+    return (keys[key-1].id == key) ? &keys[key-1] : NULL;
+}
 
 uint8_t mki_get_led_color(uint8_t idx)
 {
@@ -351,18 +357,54 @@ uint16_t mki_get_key_from_dd(pca9535_t * pca9535)
 void mki_unpress(uint8_t key)
 {
     ulog_fmt("mki_unpress %d"CRLF, key);
-    if (key <= MKI_KEY_16)         {}
+    if (key <= MKI_KEY_16)                  {}
     else if (key == MKI_KEY_ZVUKOVOI_VIZOV) {}
-    else if (key == MKI_KEY_KONEC_SVAZI)     {}
+    else if (key == MKI_KEY_KONEC_SVAZI)    {}
+
+    get_key_ptr(key)->state = KEY_IDLE;
 }
 
 void mki_press(uint8_t key)
 {
     ulog_fmt("mki_press %d"CRLF, key);
+    get_key_ptr(key)->state = KEY_PRESSED;
+
     if (key <= MKI_KEY_16) 
     {
-        p_line_state_e  p_state = get_line_p_state(key);
-        adc_state_e   adc_state = get_line_adc_state(key);
+        p_line_state_e p_state = get_line_p_state(key);
+        adc_state_e    adc_state = get_line_adc_state(key);
+        line_event_e   event = get_last_line_event(key);
+
+        switch(event)
+        {
+            case EVENT_PANEL_CALL:
+            case EVENT_AWAIT_LINE:            
+            if(/*p_state == P_AWAIT &&*/ !mux_is_active_line())
+            {
+                set_line_p_state(key, P_ON);
+                set_line_event(key, EVENT_LINE_ON);
+            }
+            break;
+
+            case EVENT_LINE_ON:
+                set_line_p_state(key, P_IDLE);
+                set_line_event(key, NO_EVENT);
+
+                local_mic_stop();
+                local_spk_stop();
+            break;
+
+            case EVENT_MISSED_CALL:
+            case NO_EVENT:
+            if(/*p_state == P_IDLE &&*/ !mux_is_active_line())
+            {
+                set_line_p_state(key, P_AWAIT);
+                set_line_event(key, EVENT_AWAIT_LINE);
+            }
+            default: break;
+        }
+      
+        /*
         if(adc_state == LINE_STATE_BUTTON_PRESS || adc_state == LINE_STATE_DETECTED)
         {
             if(p_state == P_IDLE && !mux_is_active_line())
@@ -377,6 +419,7 @@ void mki_press(uint8_t key)
                 local_spk_stop();
             }
         }
+        */
     }
     else if (key == MKI_KEY_ZVUKOVOI_VIZOV) 
     {
@@ -398,6 +441,12 @@ void mki_press(uint8_t key)
     }
 }
 
+void mki_long_press(uint8_t key)
+{
+    ulog_fmt("mki_long_press %d"CRLF, key);
+    get_key_ptr(key)->state = KEY_LONG_PRESSED;
+}
+
 void mki_test(void)
 {
     uint16_t key;
@@ -413,47 +462,65 @@ void mki_test(void)
 void mki_task(void)
 {
     uint16_t key;
+    bool isLong = false;
 
     if (dd5_change_tick && (HAL_DiffTick(dd5_change_tick) > 25)) 
     {
-        dd5_change_tick = 0;
+        if(HAL_DiffTick(dd5_change_tick) > 400)
+        {
+            isLong = true;
+            dd5_change_tick = 0;
+        }
 
         key = mki_get_key_from_dd(&key_dd5);
 
         for (uint8_t i = 0; i < 16; i++) 
         {
-            if (!GETBIT(mki_keys[0], i) && GETBIT(key, i)) 
+            if (!GETBIT(raw_keys[0], i) && GETBIT(key, i)) 
             {
                 if (i < 8) 
                     mki_unpress(i + 1);
                 else 
                     mki_unpress(24 - i);
             }
-            else if (GETBIT(mki_keys[0], i) && !GETBIT(key, i)) 
+            else if (GETBIT(raw_keys[0], i) && !GETBIT(key, i)) 
             {
                 if (i < 8) 
                     mki_press(i + 1);
                 else 
                     mki_press(24 - i);
             }
+            else if (!GETBIT(raw_keys[0], i) && !GETBIT(key, i) && isLong)
+            {
+                if (i < 8) 
+                    mki_long_press(i + 1);
+                else 
+                    mki_long_press(24 - i);
+            }
         }
-        mki_keys[0] = key;
+        raw_keys[0] = key;
     }
     
     if (dd6_change_tick && (HAL_DiffTick(dd6_change_tick) > 25)) 
     {
-        dd6_change_tick = 0;
+        if(HAL_DiffTick(dd6_change_tick) > 400)
+        {
+            isLong = true;
+            dd6_change_tick = 0;
+        }
 
         key = mki_get_key_from_dd(&key_dd6);
 
         for (uint8_t i = 0; i < 2; i++) 
         {
-            if (!GETBIT(mki_keys[1], i) && GETBIT(key, i)) 
+            if (!GETBIT(raw_keys[1], i) && GETBIT(key, i)) 
                 mki_unpress(i + 17);
-            else if (GETBIT(mki_keys[1], i) && !GETBIT(key, i)) 
+            else if (GETBIT(raw_keys[1], i) && !GETBIT(key, i)) 
                 mki_press(i + 17);
+            else if (!GETBIT(raw_keys[1], i) && !GETBIT(key, i) && isLong)
+                mki_long_press(i + 17);
         }
-        mki_keys[1] = key;
+        raw_keys[1] = key;
     }
 }
 
@@ -537,5 +604,11 @@ void mki_init(void)
     {
         ulog("mki: error DD6 not ready"CRLF);
         set_fault(FAULT_HARDWARE_ERROR);
+    }
+
+    for(uint8_t i = MKI_KEY_1; i <= MKI_KEY_ZVUKOVOI_VIZOV; i++)
+    {
+        keys[i-1].id = i;
+        keys[i-1].state = KEY_IDLE;
     }
 }

@@ -174,6 +174,27 @@ bool mux_is_active_line(void)
     return !!((p_outs.data.dd3 & 0x5555) || (p_outs.data.dd8 & 0x5555));
 }
 
+bool mux_is_awaiting_line(void)
+{
+    return !!((p_outs.data.dd3 & 0xAAAA) || (p_outs.data.dd8 & 0xAAAA));
+}
+
+bool mux_active_line_num(uint8_t* num)
+{
+    uint32_t bin = ((p_outs.data.dd8 << 16) | p_outs.data.dd3) & 0x55555555;
+    
+    for(uint8_t i = 0; i < 16; i++)
+    {
+        if((bin >> i*2) & 0x1)
+        {
+            *num = i+1;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void mux_cancel_all(void)
 {
     set_dd3(p_outs.data.dd3 & ~0x5555);

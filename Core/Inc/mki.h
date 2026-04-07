@@ -10,8 +10,6 @@
 
 #include "main.h"
 
-extern uint32_t dd5_change_tick, dd6_change_tick;
-
 typedef struct 
 {
     uint8_t id;
@@ -75,8 +73,8 @@ typedef struct
 #define MKI_KEY_14                  14
 #define MKI_KEY_15                  15
 #define MKI_KEY_16                  16
-#define MKI_KEY_KONEC_SVAZI         17
-#define MKI_KEY_ZVUKOVOI_VIZOV      18
+#define MKI_KEY_CANCEL              17
+#define MKI_KEY_CALL                18
 
 typedef enum
 {
@@ -93,9 +91,8 @@ typedef struct
 } key_t;
 
 uint8_t mki_get_led_color(uint8_t number);
-void mki_set_pwm_color(uint8_t number, const led_color_t* color);
-const led_color_t* mki_get_color_ptr(uint8_t id);
-// void mki_set_led_color(uint8_t number, uint8_t color);
+void mki_set_pwm_color(uint8_t number, uint8_t color_id);
+
 void mki_init(void);
 void mki_unpress(uint8_t key);
 void mki_press(uint8_t key);

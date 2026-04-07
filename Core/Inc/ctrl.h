@@ -28,6 +28,15 @@
 #define LINE_NUM_15  15
 #define LINE_NUM_16  16
 
+typedef enum
+{
+    NO_EVENT = 0,
+    EVENT_PANEL_CALL,
+    EVENT_AWAIT_LINE,
+    EVENT_LINE_ON,
+    EVENT_MISSED_CALL,
+} line_event_e;
+
 typedef enum 
 {
     LINE_STATE_BREAK    = 0,  //обрыв
@@ -41,15 +50,16 @@ typedef struct
 {
     timer_t  timer;
     
-    adc_state_e    adc_state;
-    adc_state_e    adc_state_last;
-    adc_state_e    adc_state_old;
+    adc_state_e   adc_state;
+    // adc_state_e    adc_state_last;
+    // adc_state_e    adc_state_old;
+    line_event_e last_event;
     p_line_state_e p_state;
 
     uint8_t num;
     uint8_t color_id;
 
-    bool isMissed;
+    // bool isMissed;
     bool isConfigured; 
     #warning TODO
 } Obj_line_t;
@@ -58,9 +68,12 @@ typedef struct
 
 adc_state_e get_line_adc_state(uint8_t num);
 
-void set_line_p_state(uint8_t num, p_line_state_e state);
 p_line_state_e get_line_p_state(uint8_t num);
 
+void set_line_event(uint8_t num, line_event_e event);
+line_event_e get_last_line_event(uint8_t num);
+
+bool is_line_configurated(uint8_t num);
 
 extern float ctrl_out_adc[16];
 extern float ctrl_p_out[16];

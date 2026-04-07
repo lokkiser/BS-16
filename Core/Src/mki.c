@@ -68,7 +68,7 @@ const led_color_t* mki_get_color_ptr(uint8_t id)
             return &MKI_LED_PWM_LIGHTBLUE;
         break;
         case MKI_LED_COLOR_PURPLE:
-            return &MKI_LED_PWM_LIGHTBLUE;
+            return &MKI_LED_PWM_PURPLE;
         break;
         case MKI_LED_COLOR_WHITE:
             return &MKI_LED_PWM_WHITE;
@@ -76,8 +76,10 @@ const led_color_t* mki_get_color_ptr(uint8_t id)
     }
 }
 
-void mki_set_pwm_color(uint8_t number, const led_color_t* color)
+void mki_set_pwm_color(uint8_t number, uint8_t color_id)
 {    
+    const led_color_t* color = mki_get_color_ptr(color_id);
+
     mki_leds_color[number-1] = color->id;
 
     switch (number)
@@ -357,9 +359,9 @@ uint16_t mki_get_key_from_dd(pca9535_t * pca9535)
 void mki_unpress(uint8_t key)
 {
     ulog_fmt("mki_unpress %d"CRLF, key);
-    if (key <= MKI_KEY_16)                  {}
-    else if (key == MKI_KEY_ZVUKOVOI_VIZOV) {}
-    else if (key == MKI_KEY_KONEC_SVAZI)    {}
+    if (key <= MKI_KEY_16)          {}
+    else if (key == MKI_KEY_CALL)   {}
+    else if (key == MKI_KEY_CANCEL) {}
 
     get_key_ptr(key)->state = KEY_IDLE;
 }
@@ -371,57 +373,29 @@ void mki_press(uint8_t key)
 
     if (key <= MKI_KEY_16) 
     {
-        p_line_state_e p_state = get_line_p_state(key);
-        adc_state_e    adc_state = get_line_adc_state(key);
-        line_event_e   event = get_last_line_event(key);
+        if(is_line_configurated(key) == false)
+            return;
+
+        line_event_e event = get_last_line_event(key);
 
         switch(event)
         {
             case EVENT_PANEL_CALL:
             case EVENT_AWAIT_LINE:            
-            if(/*p_state == P_AWAIT &&*/ !mux_is_active_line())
-            {
-                set_line_p_state(key, P_ON);
+            if(mux_is_active_line() == false)
                 set_line_event(key, EVENT_LINE_ON);
-            }
-            break;
-
-            case EVENT_LINE_ON:
-                set_line_p_state(key, P_IDLE);
-                set_line_event(key, NO_EVENT);
-
-                local_mic_stop();
-                local_spk_stop();
             break;
 
             case EVENT_MISSED_CALL:
             case NO_EVENT:
-            if(/*p_state == P_IDLE &&*/ !mux_is_active_line())
-            {
-                set_line_p_state(key, P_AWAIT);
+            if(mux_is_active_line() == false)
                 set_line_event(key, EVENT_AWAIT_LINE);
-            }
+            
+            case EVENT_LINE_ON:
             default: break;
         }
-      
-        /*
-        if(adc_state == LINE_STATE_BUTTON_PRESS || adc_state == LINE_STATE_DETECTED)
-        {
-            if(p_state == P_IDLE && !mux_is_active_line())
-                set_line_p_state(key, P_AWAIT);
-            else if(p_state == P_AWAIT && !mux_is_active_line())
-                set_line_p_state(key, P_ON);
-            else if(p_state == ON || p_state == P_ERROR)
-            {
-                set_line_p_state(key, P_IDLE);
-
-                local_mic_stop();
-                local_spk_stop();
-            }
-        }
-        */
     }
-    else if (key == MKI_KEY_ZVUKOVOI_VIZOV) 
+    else if (key == MKI_KEY_CALL) 
     {
         if(mux_is_active_line())
         {
@@ -429,12 +403,17 @@ void mki_press(uint8_t key)
             local_spk_start();
         }
     }
-    else if (key == MKI_KEY_KONEC_SVAZI) 
+    else if (key == MKI_KEY_CANCEL) 
     {
+        uint8_t num;
+        
         local_mic_stop();
         local_spk_stop();
 
-        mux_cancel_all();
+        if(mux_active_line_num(&num))
+            set_line_event(num, NO_EVENT);
+
+        // mux_cancel_all();
 
         // set_dd3(0);
         // set_dd8(0);
@@ -462,13 +441,14 @@ void mki_test(void)
 void mki_task(void)
 {
     uint16_t key;
-    bool isLong = false;
+    bool isLongPressed = false;
+
 
     if (dd5_change_tick && (HAL_DiffTick(dd5_change_tick) > 25)) 
     {
         if(HAL_DiffTick(dd5_change_tick) > 400)
         {
-            isLong = true;
+            isLongPressed = true;
             dd5_change_tick = 0;
         }
 
@@ -490,7 +470,7 @@ void mki_task(void)
                 else 
                     mki_press(24 - i);
             }
-            else if (!GETBIT(raw_keys[0], i) && !GETBIT(key, i) && isLong)
+            else if (!GETBIT(raw_keys[0], i) && !GETBIT(key, i) && isLongPressed)
             {
                 if (i < 8) 
                     mki_long_press(i + 1);
@@ -505,7 +485,7 @@ void mki_task(void)
     {
         if(HAL_DiffTick(dd6_change_tick) > 400)
         {
-            isLong = true;
+            isLongPressed = true;
             dd6_change_tick = 0;
         }
 
@@ -517,7 +497,7 @@ void mki_task(void)
                 mki_unpress(i + 17);
             else if (GETBIT(raw_keys[1], i) && !GETBIT(key, i)) 
                 mki_press(i + 17);
-            else if (!GETBIT(raw_keys[1], i) && !GETBIT(key, i) && isLong)
+            else if (!GETBIT(raw_keys[1], i) && !GETBIT(key, i) && isLongPressed)
                 mki_long_press(i + 17);
         }
         raw_keys[1] = key;
@@ -586,11 +566,11 @@ void mki_init(void)
 
     for(uint8_t i = MKI_LED_1; i <= MKI_LED_START; i++)
     {
-        mki_set_pwm_color(i, &MKI_LED_PWM_BLACK);
+        mki_set_pwm_color(i, MKI_LED_COLOR_BLACK);
     }
 
     // Init of LED colors
-    mki_set_pwm_color(MKI_LED_220, &MKI_LED_PWM_GREEN);
+    mki_set_pwm_color(MKI_LED_220, MKI_LED_COLOR_GREEN);
 
     pca9535_init(&key_dd5, MKI_I2C_HANDLE, MKI_DD5_ADDERESS);
     if (pca9535_is_ready(&key_dd5) != 0) 
@@ -606,7 +586,7 @@ void mki_init(void)
         set_fault(FAULT_HARDWARE_ERROR);
     }
 
-    for(uint8_t i = MKI_KEY_1; i <= MKI_KEY_ZVUKOVOI_VIZOV; i++)
+    for(uint8_t i = MKI_KEY_1; i <= MKI_KEY_CALL; i++)
     {
         keys[i-1].id = i;
         keys[i-1].state = KEY_IDLE;

@@ -1,5 +1,5 @@
-#ifndef __GPIO_H__
-#define __GPIO_H__
+#ifndef __TIMER_H__
+#define __TIMER_H__
 
 #include "main.h"
 
@@ -19,4 +19,4 @@ void stopTimer(timer_t* p);
 bool isTimerExpired(timer_t* p, uint32_t timeout);
 
 
-#endif /*__ GPIO_H__ */
+#endif /*__TIMER_H__ */

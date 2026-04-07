@@ -39,7 +39,6 @@ void akb_task(void)
 
 	//DAC2_1 управление током заряда
 	set_tok_zaryada(4095);
-
 }
 
 void akb_init(void)

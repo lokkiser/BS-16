@@ -138,6 +138,8 @@ p_line_state_e get_on_p(uint8_t on_p);
 
 void mux_init(void);
 bool mux_is_active_line(void);
+bool mux_is_awaiting_line(void);
+bool mux_active_line_num(uint8_t* num);
 void mux_cancel_all(void);
 
 #endif /* CORE_INC_MUX_H_ */

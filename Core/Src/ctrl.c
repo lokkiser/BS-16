@@ -15,15 +15,11 @@
 //Контроль выходов АУ, их микрофона и динамика
 //Мы переключаем через мультиплексор каналы и через делитель смотрим,
 //какое напряжение мы получаем на делителе.
-//Если там 3.3, то обрыв, 0 кз и в таком духе.
 
-// #define CTRL_VOLTAGE_BREAK            2.9f  // 3.1f    
-// #define CTRL_VOLTAGE_DETECTED         1.1f  // 2.6f	 
-// #define CTRL_VOLTAGE_BUTTON_PRESS	 1.65f
-// #define CTRL_VOLTAGE_SHORT_CIRCUIT    0.2f
-
+// 12-bit ADC (4095 max)
 #define CTRL_VOLTAGE_BREAK            3600 
 #define CTRL_VOLTAGE_DETECTED         1365 
+// #define CTRL_VOLTAGE_SHORT_CIRCUIT
 #define CTRL_VOLTAGE_SHORT_CIRCUIT     128 //248
 
 static uint8_t  ctrl_index = 0;
@@ -38,18 +34,6 @@ static uint16_t ctrl_adc_mic_old[16]    = {0};
 
 static uint16_t ctrl_adc_spk[16]        = {0};
 static uint16_t ctrl_adc_mic_signal[16] = {0};
-
-static uint8_t line_state_to_color(adc_state_e line_state)
-{
-    switch (line_state) 
-    {
-        case LINE_STATE_BREAK:         return MKI_LED_COLOR_ORANGE;
-        case LINE_STATE_DETECTED:      return MKI_LED_COLOR_GREEN;
-        case LINE_STATE_BUTTON_PRESS:  return MKI_LED_COLOR_GREEN; // MKI_LED_COLOR_LIGHTBLUE;
-        case LINE_STATE_SHORT_CIRCUIT: return MKI_LED_COLOR_ORANGE;
-        default:                       return MKI_LED_COLOR_BLACK;
-    }
-}
 
 static adc_state_e adc_to_state(uint16_t value) 
 {
@@ -102,6 +86,14 @@ static Obj_line_t* get_line_obj_ptr(uint8_t num)
 	return (lines[num-1].num == num) ? &lines[num-1] : NULL;
 }
 
+static void set_line_p_state(uint8_t num, p_line_state_e state)
+{
+    Obj_line_t* line = get_line_obj_ptr(num);
+
+    line->p_state = state;
+    set_on_p(num, state);
+}
+
 static void ctrl_button_press(uint8_t num)
 {
     ulog_fmt("ctrl: VP button press %d"CRLF, num);
@@ -109,6 +101,8 @@ static void ctrl_button_press(uint8_t num)
 	if(get_on_p(num) != P_ON)
     {
 		set_line_p_state(num, P_AWAIT);
+        set_line_event(num, EVENT_PANEL_CALL);
+
         startSingleShotTimer(&get_line_obj_ptr(num)->timer);
     }
 }
@@ -144,70 +138,65 @@ void ctrl_task(void)
     #warning TODO
     if(cur_line->isConfigured)
     {
-        
-        cur_line->adc_state 	 = adc_to_state(ctrl_adc_mic_idle[ctrl_index]);
-        cur_line->adc_state_last = adc_to_state(ctrl_adc_mic_last[ctrl_index]);
-        cur_line->adc_state_old  = adc_to_state(ctrl_adc_mic_old [ctrl_index]);
-        cur_line->p_state        = get_on_p(cur_line->num);
-        cur_line->color_id       = mki_get_led_color(ctrl_index);
+        cur_line->adc_state        = adc_to_state(ctrl_adc_mic_idle[ctrl_index]);
+        adc_state_e adc_state_last = adc_to_state(ctrl_adc_mic_last[ctrl_index]);
+        adc_state_e adc_state_old  = adc_to_state(ctrl_adc_mic_old [ctrl_index]);
+        cur_line->p_state  = get_on_p(cur_line->num);
+        cur_line->color_id = mki_get_led_color(ctrl_index);
 
         if(isTimerExpired(&cur_line->timer, 10000))
         {
-            cur_line->isMissed = true;
             set_line_p_state(cur_line->num, P_IDLE);
+            set_line_event(cur_line->num, EVENT_MISSED_CALL);
         }
 
         switch(cur_line->adc_state)
         {
-        	case LINE_STATE_BREAK:
-        	case LINE_STATE_SHORT_CIRCUIT:
-        		
-        	break;
-        
         	case LINE_STATE_DETECTED:
     		if(cur_line->p_state == P_ERROR)
     			set_line_p_state(cur_line->num, P_IDLE);
         	break;
 
         	case LINE_STATE_BUTTON_PRESS:
-            if( (cur_line->adc_state_old  != LINE_STATE_BUTTON_PRESS)
-             && (cur_line->adc_state_last == LINE_STATE_BUTTON_PRESS)
-             && (cur_line->p_state == P_IDLE) 
-              )
+            if( (adc_state_old  != LINE_STATE_BUTTON_PRESS)
+             && (adc_state_last == LINE_STATE_BUTTON_PRESS)
+             && (cur_line->p_state == P_IDLE) )
             {
                 ctrl_button_press(cur_line->num);
             }
         	break;
 
+        	case LINE_STATE_BREAK:
+        	case LINE_STATE_SHORT_CIRCUIT:        		
         	default: break;
         }
 
-        switch(cur_line->p_state)
+        switch(cur_line->last_event)
         {
-        	default:
-        	case P_ERROR:
-    			set_line_led_color(cur_line->num, MKI_LED_COLOR_WHITE);
-    		break;
+            case NO_EVENT:
+            if(cur_line->adc_state == LINE_STATE_BREAK || cur_line->adc_state == LINE_STATE_SHORT_CIRCUIT)
+                set_line_led_color(cur_line->num, MKI_LED_COLOR_ORANGE);
+            else
+                set_line_led_color(cur_line->num, MKI_LED_COLOR_GREEN);
+            break;
+            
+            case EVENT_PANEL_CALL:
+                set_line_led_color(cur_line->num, MKI_LED_COLOR_PURPLE);
+            break;
 
-        	case P_IDLE:
-                if(cur_line->isMissed)
-                {
-                    set_line_led_color(cur_line->num, MKI_LED_COLOR_RED);
-                }
-                else
-                {
-        	    	const uint8_t new_color_id = line_state_to_color(cur_line->adc_state);
-        	    	set_line_led_color(cur_line->num, new_color_id);
-                }
-        	break;
+            case EVENT_AWAIT_LINE:            
+                set_line_led_color(cur_line->num, MKI_LED_COLOR_LIGHTBLUE);
+            break;
+            
+            case EVENT_LINE_ON:
+                set_line_led_color(cur_line->num, MKI_LED_COLOR_BLUE);
+            break;
+            
+            case EVENT_MISSED_CALL:
+                set_line_led_color(cur_line->num, MKI_LED_COLOR_RED);
+            break;
 
-        	case P_AWAIT:
-        		set_line_led_color(cur_line->num, MKI_LED_COLOR_LIGHTBLUE);
-        	break;
-
-        	case P_ON:
-        		set_line_led_color(cur_line->num, MKI_LED_COLOR_BLUE);
-    		break;
+            default: break;
         }
 
         if (ctrl_adc_mic_idle[ctrl_index] < CTRL_VOLTAGE_SHORT_CIRCUIT) 
@@ -222,7 +211,7 @@ void ctrl_task(void)
 
         if (ctrl_adc_spk[ctrl_index] < CTRL_VOLTAGE_SHORT_CIRCUIT) 
             set_fault(FAULT_P_OUT_1_KZ + ctrl_index);
-        else if (ctrl_adc_spk[ctrl_index] > 1862) 
+        else if (ctrl_adc_spk[ctrl_index] > 1862) // TODO
             set_fault(FAULT_P_OUT_1_OBRIV + ctrl_index);
         else 
         {
@@ -230,7 +219,6 @@ void ctrl_task(void)
             unset_fault(FAULT_P_OUT_1_OBRIV + ctrl_index);
         }
     }
-
 
     ctrl_index++;
     ctrl_index %= 16;
@@ -257,20 +245,6 @@ void ctrl_init(void)
     set_mux_line(ctrl_index);
 }
 
-void set_line_p_state(uint8_t num, p_line_state_e state)
-{
-	Obj_line_t* line = get_line_obj_ptr(num);
-
-    line->p_state = state;
-	set_on_p(num, state);
-
-    if(state != P_IDLE)
-    {
-        stopTimer(&line->timer);
-        line->isMissed = false;
-    } 
-}
-
 p_line_state_e get_line_p_state(uint8_t num)
 {
 	return get_line_obj_ptr(num)->p_state;
@@ -279,4 +253,43 @@ p_line_state_e get_line_p_state(uint8_t num)
 adc_state_e get_line_adc_state(uint8_t num)
 {
 	return get_line_obj_ptr(num)->adc_state;
+}
+
+void set_line_event(uint8_t num, line_event_e event)
+{
+    Obj_line_t* line = get_line_obj_ptr(num);
+
+    if(event == EVENT_PANEL_CALL)
+        startSingleShotTimer(&line->timer);
+    else 
+        stopTimer(&line->timer);
+
+    switch(event)
+    {
+        case EVENT_PANEL_CALL:
+        case EVENT_AWAIT_LINE:            
+        set_line_p_state(num, P_AWAIT);
+        break;
+
+        case EVENT_LINE_ON:
+        set_line_p_state(num, P_ON);
+        break;
+
+        case NO_EVENT:
+        case EVENT_MISSED_CALL:
+        set_line_p_state(num, P_IDLE);
+        default: break;
+    }
+
+    line->last_event = event;
+}
+
+line_event_e get_last_line_event(uint8_t num)
+{
+    return get_line_obj_ptr(num)->last_event;
+}
+
+bool is_line_configurated(uint8_t num)
+{
+    return get_line_obj_ptr(num)->isConfigured;
 }

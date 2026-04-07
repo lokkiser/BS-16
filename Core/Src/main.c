@@ -122,6 +122,8 @@ static void MX_IWDG_Init(void);
 /* USER CODE BEGIN 0 */
 bool fatfs_mount = false;
 
+extern uint32_t dd5_change_tick, dd6_change_tick;
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     //fulog_fmt("i%d"CRLF, GPIO_Pin);
@@ -271,9 +273,9 @@ void on_timer_1_sec(void)
     }
 
     if(is_fault())
-      mki_set_pwm_color(MKI_LED_AVAR, mki_get_color_ptr(MKI_LED_COLOR_ORANGE));
+      mki_set_pwm_color(MKI_LED_AVAR, MKI_LED_COLOR_ORANGE);
     else
-      mki_set_pwm_color(MKI_LED_AVAR, mki_get_color_ptr(MKI_LED_COLOR_BLACK));
+      mki_set_pwm_color(MKI_LED_AVAR, MKI_LED_COLOR_BLACK);
 }
 
 void on_timer_1_min(void)

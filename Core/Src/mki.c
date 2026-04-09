@@ -10,9 +10,10 @@
 #include "pca9635.h"
 #include "str_util.h"
 #include "fault.h"
-#include "local_mic.h"
-#include "local_spk.h"
+// #include "local_mic.h"
+// #include "local_spk.h"
 #include "ctrl.h"
+#include "password.h"
 
 static pca9635_t led_dd1 = {0}, led_dd2 = {0}, led_dd3 = {0}, led_dd4 = {0};
 static pca9535_t key_dd5 = {0}, key_dd6 = {0};
@@ -22,8 +23,14 @@ uint32_t dd5_change_tick = 0, dd6_change_tick = 0;
 
 static key_t    keys[18] = {0};
 static uint8_t  mki_leds_color[20] = {0};
-// static uint8_t  mki_leds_pwm[20]   = {0};
 static uint16_t raw_keys[2] = {0xFFFF, 0xFFFF};
+
+static struct
+{
+   timer_t timeout;
+   timer_t periodic;
+   bool    flag; 
+} wrong_pass;
 
 const led_color_t  MKI_LED_PWM_BLACK     = {MKI_LED_COLOR_BLACK,     0,    0,    0};
 const led_color_t  MKI_LED_PWM_RED       = {MKI_LED_COLOR_RED,    0xFF,    0,    0};
@@ -186,6 +193,14 @@ void mki_set_pwm_color(uint8_t number, uint8_t color_id)
             PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM11, color->b);
         break;
         default: break;
+    }
+}
+
+void mki_set_all_line_leds(uint8_t color_id)
+{
+    for(uint8_t i = MKI_LED_1; i <= MKI_LED_16; i++)
+    {
+        mki_set_pwm_color(i, color_id);
     }
 }
 
@@ -371,47 +386,65 @@ void mki_press(uint8_t key)
     ulog_fmt("mki_press %d"CRLF, key);
     get_key_ptr(key)->state = KEY_PRESSED;
 
+
     if (key <= MKI_KEY_16) 
     {
-        if(is_line_configurated(key) == false)
-            return;
-
-        line_event_e event = get_last_line_event(key);
-
-        switch(event)
+        if(password_is_waiting())
         {
-            case EVENT_PANEL_CALL:
-            case EVENT_AWAIT_LINE:            
-            if(mux_is_active_line() == false)
-                set_line_event(key, EVENT_LINE_ON);
-            break;
+            password_next_step(key);
+        }
+        else
+        {
+            if(is_line_configurated(key) == false)
+                return;
 
-            case EVENT_MISSED_CALL:
-            case NO_EVENT:
-            if(mux_is_active_line() == false)
-                set_line_event(key, EVENT_AWAIT_LINE);
-            
-            case EVENT_LINE_ON:
-            default: break;
+            line_event_e event = get_last_line_event(key);
+
+            switch(event)
+            {
+                case EVENT_PANEL_CALL:
+                case EVENT_AWAIT_LINE:            
+                if(mux_is_active_line() == false)
+                    set_line_event(key, EVENT_LINE_ON);
+                break;
+
+                case EVENT_MISSED_CALL:
+                case NO_EVENT:
+                if(mux_is_active_line() == false && password_is_passed())
+                {
+                    set_line_event(key, EVENT_AWAIT_LINE);
+                    password_reset_state();
+                }
+                
+                case EVENT_LINE_ON:
+                default: break;
+            }
         }
     }
     else if (key == MKI_KEY_CALL) 
     {
+    /*        
         if(mux_is_active_line())
         {
             local_mic_start();
             local_spk_start();
         }
+    */
+        if(mux_is_active_line() == false)
+            password_req();    
     }
     else if (key == MKI_KEY_CANCEL) 
     {
         uint8_t num;
-        
-        local_mic_stop();
-        local_spk_stop();
+
+        // local_mic_stop();
+        // local_spk_stop();
 
         if(mux_active_line_num(&num))
             set_line_event(num, NO_EVENT);
+
+        if(password_is_waiting())
+            password_reset_state();
 
         // mux_cancel_all();
 
@@ -443,6 +476,27 @@ void mki_task(void)
     uint16_t key;
     bool isLongPressed = false;
 
+    if(isTimerExpired(&wrong_pass.timeout, 3000))
+    {
+        stopTimer(&wrong_pass.periodic);
+        wrong_pass.flag = false;
+    }
+
+    if(isTimerExpired(&wrong_pass.periodic, 500))
+    {
+        static bool on;
+
+        if(on)
+        {
+            mki_set_all_line_leds(MKI_LED_COLOR_BLACK);
+            on = false;
+        }
+        else
+        {
+            mki_set_all_line_leds(MKI_LED_COLOR_RED);
+            on = true;
+        }
+    }
 
     if (dd5_change_tick && (HAL_DiffTick(dd5_change_tick) > 25)) 
     {
@@ -592,3 +646,19 @@ void mki_init(void)
         keys[i-1].state = KEY_IDLE;
     }
 }
+
+void mki_wrong_pass_event(void)
+{
+    if(wrong_pass.flag == false)
+    {
+        wrong_pass.flag = true;
+        startTimer(&wrong_pass.periodic);
+        startSingleShotTimer(&wrong_pass.timeout);
+    }
+}
+
+bool mki_is_global_event(void)
+{
+    return wrong_pass.flag;
+}
+

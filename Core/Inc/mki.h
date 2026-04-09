@@ -99,6 +99,9 @@ void mki_press(uint8_t key);
 void mki_long_press(uint8_t key);
 void mki_task(void);
 
+void mki_wrong_pass_event(void);
+bool mki_is_global_event(void);
+
 void mki_test(void);
 
 #endif /* CORE_INC_MKI_H_ */

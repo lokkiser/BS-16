@@ -42,6 +42,7 @@
 #include "memplay_util.h"
 #include "dacplay_util.h"
 #include "mp3files.h"
+#include "password.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -250,6 +251,7 @@ void on_timer_25_msec(void)
 {
     mki_task();
     ctrl_task();
+    password_task();
 }
 
 void on_timer_50_msec(void)
@@ -428,6 +430,8 @@ int main(void)
       rtc_set_datetime_str("2026-01-19T10:16:01");
   }
 
+  password_init(0x1234);
+  #warning hardcoded pass
   akb_init();
   ctrl_init();
 

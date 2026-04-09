@@ -11,6 +11,9 @@
 #include "stm_util.h"
 #include "fault.h"
 #include "mki.h"
+#include "local_mic.h"
+#include "local_spk.h"
+
 
 //Контроль выходов АУ, их микрофона и динамика
 //Мы переключаем через мультиплексор каналы и через делитель смотрим,
@@ -109,11 +112,22 @@ static void ctrl_button_press(uint8_t num)
 
 static void set_line_led_color(uint8_t num, uint8_t color_id)
 {
-	if (mki_get_led_color(num-1) != color_id)
-	{
-	   mki_set_pwm_color(num, mki_get_color_ptr(color_id));
-	}
+    if(mki_is_global_event() == false)
+    {
+    	if (mki_get_led_color(num-1) != color_id)
+    	{
+    	   mki_set_pwm_color(num, color_id);
+    	}
+    }
 	get_line_obj_ptr(num)->color_id = color_id;
+}
+
+static void update_line_leds(void)
+{
+    for(uint8_t i = 0; i < 16; i++)
+    {
+        set_line_led_color(i+1, lines[i].color_id);
+    }
 }
 
 void ctrl_task(void)
@@ -219,6 +233,10 @@ void ctrl_task(void)
             unset_fault(FAULT_P_OUT_1_OBRIV + ctrl_index);
         }
     }
+    else 
+    {
+        set_line_led_color(cur_line->num ,MKI_LED_COLOR_BLACK);
+    }
 
     ctrl_index++;
     ctrl_index %= 16;
@@ -233,13 +251,13 @@ void ctrl_init(void)
 		lines[i].num = i+1;
 		lines[i].color_id = MKI_LED_COLOR_BLACK;
 		lines[i].p_state  = P_IDLE;
-
-        // #warning hardcoded
-        // lines[i].isConfigured = true;
 	}
 
-    #warning hardcoded
-    lines[0].isConfigured = true;
+    for(uint8_t i = 0; i < 4;  i++)
+    {
+        #warning hardcoded
+        lines[i].isConfigured = true;
+    }
 
     ctrl_index = 0;
     set_mux_line(ctrl_index);
@@ -266,19 +284,28 @@ void set_line_event(uint8_t num, line_event_e event)
 
     switch(event)
     {
+        case NO_EVENT:
+        local_spk_stop();
+        local_mic_stop();
+        //no break
+        case EVENT_MISSED_CALL:
+        set_line_p_state(num, P_IDLE);
+        //no break
+        default: break;
+
+        case EVENT_AWAIT_LINE:
+        local_spk_start();
+        //no break            
         case EVENT_PANEL_CALL:
-        case EVENT_AWAIT_LINE:            
         set_line_p_state(num, P_AWAIT);
         break;
 
         case EVENT_LINE_ON:
         set_line_p_state(num, P_ON);
-        break;
 
-        case NO_EVENT:
-        case EVENT_MISSED_CALL:
-        set_line_p_state(num, P_IDLE);
-        default: break;
+        local_spk_start();
+        local_mic_start();
+        break;
     }
 
     line->last_event = event;

@@ -241,12 +241,7 @@ void HAL_DAC_ErrorCallbackCh1(DAC_HandleTypeDef *hdac)
 void HAL_DACEx_ErrorCallbackCh2(DAC_HandleTypeDef *hdac)
 {
 }
-/*
-uint32_t timers_get_tick(void)
-{
-    return HAL_GetTick();
-}
-*/
+
 void on_timer_25_msec(void)
 {
     mki_task();
@@ -430,7 +425,7 @@ int main(void)
       rtc_set_datetime_str("2026-01-19T10:16:01");
   }
 
-  password_init(0x1234);
+  password_init(0x0123);
   #warning hardcoded pass
   akb_init();
   ctrl_init();

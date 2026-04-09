@@ -10,8 +10,6 @@
 #include "pca9635.h"
 #include "str_util.h"
 #include "fault.h"
-// #include "local_mic.h"
-// #include "local_spk.h"
 #include "ctrl.h"
 #include "password.h"
 
@@ -391,7 +389,7 @@ void mki_press(uint8_t key)
     {
         if(password_is_waiting())
         {
-            password_next_step(key);
+            password_next_step(key-1);
         }
         else
         {
@@ -423,13 +421,6 @@ void mki_press(uint8_t key)
     }
     else if (key == MKI_KEY_CALL) 
     {
-    /*        
-        if(mux_is_active_line())
-        {
-            local_mic_start();
-            local_spk_start();
-        }
-    */
         if(mux_is_active_line() == false)
             password_req();    
     }
@@ -437,16 +428,14 @@ void mki_press(uint8_t key)
     {
         uint8_t num;
 
-        // local_mic_stop();
-        // local_spk_stop();
-
         if(mux_active_line_num(&num))
+        {
             set_line_event(num, NO_EVENT);
+            mux_cancel_all();
+        }
 
         if(password_is_waiting())
             password_reset_state();
-
-        // mux_cancel_all();
 
         // set_dd3(0);
         // set_dd8(0);

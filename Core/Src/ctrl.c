@@ -23,7 +23,7 @@
 #define CTRL_VOLTAGE_BREAK            3600 
 #define CTRL_VOLTAGE_DETECTED         1365 
 // #define CTRL_VOLTAGE_SHORT_CIRCUIT
-#define CTRL_VOLTAGE_SHORT_CIRCUIT     128 //248
+#define CTRL_VOLTAGE_SHORT_CIRCUIT     128 
 
 static uint8_t  ctrl_index = 0;
 static uint16_t ctrl_adc1_dma[2] = {0};
@@ -158,7 +158,7 @@ void ctrl_task(void)
         cur_line->p_state  = get_on_p(cur_line->num);
         cur_line->color_id = mki_get_led_color(ctrl_index);
 
-        if(isTimerExpired(&cur_line->timer, 10000))
+        if(isTimerExpired(&cur_line->timer, 30000))
         {
             set_line_p_state(cur_line->num, P_IDLE);
             set_line_event(cur_line->num, EVENT_MISSED_CALL);

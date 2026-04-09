@@ -85,7 +85,6 @@ typedef enum
 
 typedef struct
 {
-    // timer_t      timer;
     key_states_e state;
     uint8_t         id;
 } key_t;

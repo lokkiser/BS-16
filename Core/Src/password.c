@@ -20,22 +20,22 @@ void password_task(void)
 
     if(isTimerExpired(&p->timer, 30000))
     {
-        p->state = PASS_ERROR;   
-        p->check = 0;
+        if(p->state != PASS_OK || p->state == PASS_IDLE)
+            p->state = PASS_CHECK;
+        else
+            p->state = PASS_IDLE;     
     }
     
     if(p->state == PASS_CHECK)
     {
         p->state = (p->ref == p->check) ? PASS_OK : PASS_ERROR;
-        p->check = 0;
 
-        if(p->state == PASS_OK)
-            stopTimer(&p->timer);
+        if(p->state == PASS_ERROR)
+            mki_wrong_pass_event();
     }
 
     if(p->state == PASS_ERROR)
     {
-        mki_wrong_pass_event();
         p->state = PASS_IDLE;
     }
 }
@@ -44,8 +44,7 @@ void password_req(void)
 {
     password_t* p = &password;
 
-    if(p->state == PASS_IDLE /*|| p->state == PASS_ERROR*/ 
-    || password_is_waiting() == false)
+    if(p->state == PASS_IDLE || password_is_waiting() == false)
     {
         p->check = 0;
 

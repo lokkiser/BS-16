@@ -1,6 +1,7 @@
 
 #include "password.h"
 #include "mki.h"
+#include "buzzer.h"
 
 static password_t password = {0};
 
@@ -28,15 +29,29 @@ void password_task(void)
     
     if(p->state == PASS_CHECK)
     {
-        p->state = (p->ref == p->check) ? PASS_OK : PASS_ERROR;
+        if(p->ref == p->check)
+        {
+            p->state = PASS_OK;
 
-        if(p->state == PASS_ERROR)
+            buzzer_flush();
+            buzzer_make_sound(150, 587, 0xA0);
+            buzzer_add_queue( 150, 587, 0);
+            buzzer_add_queue( 150, 587, 0xA0);
+            buzzer_add_queue( 150, 587, 0);
+            buzzer_add_queue( 150, 587, 0xA0);
+        }
+        else 
+        {
+            p->state = PASS_ERROR;   
+            stopTimer(&password.timer);
             mki_wrong_pass_event();
-    }
 
-    if(p->state == PASS_ERROR)
-    {
-        p->state = PASS_IDLE;
+            buzzer_make_sound(150, 262, 0xFF);
+            buzzer_add_queue( 150, 262, 0);
+            buzzer_add_queue( 150, 262, 0xFF);
+            buzzer_add_queue( 150, 262, 0);
+            buzzer_add_queue( 150, 262, 0xFF);
+        }
     }
 }
 
@@ -44,7 +59,10 @@ void password_req(void)
 {
     password_t* p = &password;
 
-    if(p->state == PASS_IDLE || password_is_waiting() == false)
+    if(p->state == PASS_IDLE 
+    || p->state == PASS_ERROR 
+    || p->state == PASS_OK 
+    || password_is_waiting() == false)
     {
         p->check = 0;
 

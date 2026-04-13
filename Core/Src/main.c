@@ -43,6 +43,7 @@
 #include "dacplay_util.h"
 #include "mp3files.h"
 #include "password.h"
+#include "buzzer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -251,7 +252,8 @@ void on_timer_25_msec(void)
 
 void on_timer_50_msec(void)
 {
-    memplay_task();
+    buzzer_task();
+    // memplay_task();
 }
 
 void on_timer_250_msec(void)
@@ -447,11 +449,18 @@ int main(void)
 
   filelog("Перезагрузка"CRLF);
 
-  memplay_init(sound_buf, sizeof(sound_buf));
+  // memplay_init(sound_buf, sizeof(sound_buf));
   // memplay(start_sound, sizeof(start_sound), &spk_dacplay_data, setting.spk_volume, &htim15);
-  memplay(start_sound, sizeof(start_sound), &spk_dacplay_data, 50, &htim15);
-  #warning hardcoded volume 50
+  // memplay(start_sound, sizeof(start_sound), &spk_dacplay_data, 50, &htim15);
+  // #warning hardcoded volume 50
+  // set_tim_frequency2_and_start(&htim15, 16000, BASE_FREQUENCY);
+  // HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)start_sound, sizeof(start_sound)*2, DAC_ALIGN_12B_R);
+  // HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)sin_const_100_2047, sizeof(sin_const_100_2047)*2, DAC_ALIGN_12B_R);
 
+  buzzer_init(&hdac1, DAC_CHANNEL_2, &htim15);
+  buzzer_make_sound(250, 440, 0x80);
+  buzzer_add_queue (250, 494, 0x80);
+  buzzer_add_queue (250, 554, 0x80);
 
   ulog("BS-16 goto loop"CRLF);
   /* USER CODE END 2 */

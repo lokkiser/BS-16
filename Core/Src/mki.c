@@ -12,6 +12,7 @@
 #include "fault.h"
 #include "ctrl.h"
 #include "password.h"
+#include "buzzer.h"
 
 static pca9635_t led_dd1 = {0}, led_dd2 = {0}, led_dd3 = {0}, led_dd4 = {0};
 static pca9535_t key_dd5 = {0}, key_dd6 = {0};
@@ -384,18 +385,14 @@ void mki_press(uint8_t key)
     ulog_fmt("mki_press %d"CRLF, key);
     get_key_ptr(key)->state = KEY_PRESSED;
 
-
     if (key <= MKI_KEY_16) 
     {
         if(password_is_waiting())
         {
             password_next_step(key-1);
         }
-        else
+        else if(is_line_configurated(key))
         {
-            if(is_line_configurated(key) == false)
-                return;
-
             line_event_e event = get_last_line_event(key);
 
             switch(event)
@@ -427,12 +424,16 @@ void mki_press(uint8_t key)
     else if (key == MKI_KEY_CANCEL) 
     {
         uint8_t num;
-
         if(mux_active_line_num(&num))
         {
             set_line_event(num, NO_EVENT);
             mux_cancel_all();
+
+            if(mux_is_awaiting_line() == false)
+                dial_tone_stop();
         }
+        else
+            dial_tone_stop();
 
         if(password_is_waiting())
             password_reset_state();
@@ -440,6 +441,8 @@ void mki_press(uint8_t key)
         // set_dd3(0);
         // set_dd8(0);
     }
+
+    buzzer_make_sound(100, 500, 0x7F);
 }
 
 void mki_long_press(uint8_t key)
@@ -459,21 +462,17 @@ void mki_test(void)
     ulog_fmt("mki: DD6 %d"CRLF, key);
 }
 
+#define LONG_PRESS_TIMING  400
 
-void mki_task(void)
+#define WRONG_PASS_PERIOD  150
+#define NUM_OF_PULSE         3
+#define WRONG_PASS_TIMEOUT    (WRONG_PASS_PERIOD * NUM_OF_PULSE * 2)
+
+void wrong_pass_task(void)
 {
-    uint16_t key;
-    bool isLongPressed = false;
-
-    if(isTimerExpired(&wrong_pass.timeout, 3000))
+    if(isTimerExpired(&wrong_pass.periodic, WRONG_PASS_PERIOD))
     {
-        stopTimer(&wrong_pass.periodic);
-        wrong_pass.flag = false;
-    }
-
-    if(isTimerExpired(&wrong_pass.periodic, 500))
-    {
-        static bool on;
+        static bool on = false;
 
         if(on)
         {
@@ -482,14 +481,31 @@ void mki_task(void)
         }
         else
         {
+            // buzzer_make_sound(200, 262, 0xFF);
+
             mki_set_all_line_leds(MKI_LED_COLOR_RED);
             on = true;
         }
+        
+        if(isTimerExpired(&wrong_pass.timeout, WRONG_PASS_TIMEOUT))
+        {
+            stopTimer(&wrong_pass.periodic);
+            wrong_pass.flag = false;
+            on = false;
+        }
     }
+}
+
+void mki_task(void)
+{
+    uint16_t key;
+    bool isLongPressed = false;
+
+    wrong_pass_task();
 
     if (dd5_change_tick && (HAL_DiffTick(dd5_change_tick) > 25)) 
     {
-        if(HAL_DiffTick(dd5_change_tick) > 400)
+        if(HAL_DiffTick(dd5_change_tick) > LONG_PRESS_TIMING)
         {
             isLongPressed = true;
             dd5_change_tick = 0;
@@ -526,7 +542,7 @@ void mki_task(void)
     
     if (dd6_change_tick && (HAL_DiffTick(dd6_change_tick) > 25)) 
     {
-        if(HAL_DiffTick(dd6_change_tick) > 400)
+        if(HAL_DiffTick(dd6_change_tick) > LONG_PRESS_TIMING)
         {
             isLongPressed = true;
             dd6_change_tick = 0;

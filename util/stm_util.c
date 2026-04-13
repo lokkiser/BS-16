@@ -100,6 +100,8 @@ void get_stm32_tim_freq_param(uint32_t base_freq, uint32_t required_freq, uint16
 #ifdef HAL_TIM_MODULE_ENABLED
 void set_tim_frequency(TIM_TypeDef * ptim, uint32_t frequency, uint32_t base_frequency)
 {
+    if(frequency == 0) return;
+
 	uint16_t prescaler;
 	uint16_t counter_period;
 

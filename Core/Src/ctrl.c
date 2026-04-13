@@ -13,6 +13,7 @@
 #include "mki.h"
 #include "local_mic.h"
 #include "local_spk.h"
+#include "buzzer.h"
 
 
 //Контроль выходов АУ, их микрофона и динамика
@@ -103,16 +104,13 @@ static void ctrl_button_press(uint8_t num)
 
 	if(get_on_p(num) != P_ON)
     {
-		set_line_p_state(num, P_AWAIT);
         set_line_event(num, EVENT_PANEL_CALL);
-
-        startSingleShotTimer(&get_line_obj_ptr(num)->timer);
     }
 }
 
 static void set_line_led_color(uint8_t num, uint8_t color_id)
 {
-    if(mki_is_global_event() == false)
+    if(mki_is_global_event() == false && buzzer_is_active() == false)
     {
     	if (mki_get_led_color(num-1) != color_id)
     	{
@@ -127,6 +125,47 @@ static void update_line_leds(void)
     for(uint8_t i = 0; i < 16; i++)
     {
         set_line_led_color(i+1, lines[i].color_id);
+    }
+}
+
+static struct
+{
+   timer_t timeout;
+   timer_t periodic;
+   bool    flag; 
+} dial_tone;
+
+void dial_tone_stop(void)
+{
+    dial_tone.flag = false;
+    stopTimer(&dial_tone.periodic);
+    stopTimer(&dial_tone.timeout);
+}
+
+static void dial_tone_task(void)
+{
+    if(isTimerExpired(&dial_tone.periodic, 5000))
+    {
+        if(isTimerExpired(&dial_tone.timeout, 29000))
+        {
+            stopTimer(&dial_tone.periodic);
+            dial_tone.flag = false;
+        }
+
+        buzzer_add_queue(1000, 425, 0xFF);
+    }
+}
+
+static void dial_tone_event(void)
+{
+    if(dial_tone.flag == false)
+    {
+        dial_tone.flag = true;
+        startTimer(&dial_tone.periodic);
+        startSingleShotTimer(&dial_tone.timeout);
+
+        buzzer_flush();
+        buzzer_add_queue(1000, 425, 0xFF);
     }
 }
 
@@ -146,6 +185,8 @@ void ctrl_task(void)
     }
 
     HAL_Delay(1); // Чтобы точно завершить обработку прерываний
+
+    dial_tone_task();
 
     Obj_line_t* cur_line = &lines[ctrl_index];
 
@@ -238,8 +279,12 @@ void ctrl_task(void)
         set_line_led_color(cur_line->num ,MKI_LED_COLOR_BLACK);
     }
 
+
     ctrl_index++;
     ctrl_index %= 16;
+    
+    if(ctrl_index == 0 && mki_is_global_event() == false && buzzer_is_active() == false)
+        update_line_leds();
 
     set_mux_line(ctrl_index);
 }
@@ -278,9 +323,15 @@ void set_line_event(uint8_t num, line_event_e event)
     Obj_line_t* line = get_line_obj_ptr(num);
 
     if(event == EVENT_PANEL_CALL)
+    {
+        dial_tone_event();
         startSingleShotTimer(&line->timer);
-    else 
+    }
+    else if(line->last_event == EVENT_PANEL_CALL)
+    {
         stopTimer(&line->timer);
+        buzzer_flush();
+    }
 
     switch(event)
     {

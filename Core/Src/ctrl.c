@@ -146,7 +146,7 @@ static void dial_tone_task(void)
 {
     if(isTimerExpired(&dial_tone.periodic, 5000))
     {
-        if(isTimerExpired(&dial_tone.timeout, 29000))
+        if(isTimerExpired(&dial_tone.timeout, 30000))
         {
             stopTimer(&dial_tone.periodic);
             dial_tone.flag = false;

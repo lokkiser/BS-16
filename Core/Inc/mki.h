@@ -89,6 +89,13 @@ typedef struct
     uint8_t         id;
 } key_t;
 
+typedef struct
+{
+   timer_t timeout;
+   timer_t periodic;
+   bool    flag; 
+} global_event_t;
+
 uint8_t mki_get_led_color(uint8_t number);
 void mki_set_pwm_color(uint8_t number, uint8_t color_id);
 
@@ -100,7 +107,5 @@ void mki_task(void);
 
 void mki_wrong_pass_event(void);
 bool mki_is_global_event(void);
-
-void mki_test(void);
 
 #endif /* CORE_INC_MKI_H_ */

@@ -24,12 +24,8 @@ static key_t    keys[18] = {0};
 static uint8_t  mki_leds_color[20] = {0};
 static uint16_t raw_keys[2] = {0xFFFF, 0xFFFF};
 
-static struct
-{
-   timer_t timeout;
-   timer_t periodic;
-   bool    flag; 
-} wrong_pass;
+static global_event_t wrong_pass = {0};
+static global_event_t mki_test   = {0};
 
 const led_color_t  MKI_LED_PWM_BLACK     = {MKI_LED_COLOR_BLACK,     0,    0,    0};
 const led_color_t  MKI_LED_PWM_RED       = {MKI_LED_COLOR_RED,    0xFF,    0,    0};
@@ -369,6 +365,26 @@ uint16_t mki_get_key_from_dd(pca9535_t * pca9535)
     return res;
 }
 
+void mki_test_event(void)
+{
+    if(mki_test.flag == false)
+    {
+        mki_test.flag = true;
+        startTimer(&mki_test.periodic);
+        startSingleShotTimer(&mki_test.timeout);
+
+        mki_set_all_line_leds(MKI_LED_COLOR_WHITE);
+
+        mki_set_pwm_color(MKI_LED_220,   MKI_LED_COLOR_WHITE);
+        mki_set_pwm_color(MKI_LED_BAT,   MKI_LED_COLOR_WHITE);
+        mki_set_pwm_color(MKI_LED_AVAR,  MKI_LED_COLOR_WHITE);
+        mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_WHITE);
+
+        buzzer_make_sound(300, 250, 0xFF);
+        buzzer_add_queue(300,  500, 0xA0);
+        buzzer_add_queue(300, 1000, 0x40);
+    }
+}
 
 void mki_unpress(uint8_t key)
 {
@@ -449,20 +465,46 @@ void mki_long_press(uint8_t key)
 {
     ulog_fmt("mki_long_press %d"CRLF, key);
     get_key_ptr(key)->state = KEY_LONG_PRESSED;
+
+    if( (key == MKI_KEY_CANCEL && get_key_ptr(MKI_KEY_CALL)->state == KEY_LONG_PRESSED)
+    ||  (key == MKI_KEY_CALL && get_key_ptr(MKI_KEY_CANCEL)->state == KEY_LONG_PRESSED)
+      )
+    {
+        mki_test_event();
+        password_reset_state();
+    }
 }
 
-void mki_test(void)
+static void mki_start_LED_task(void)
 {
-    uint16_t key;
+    static bool isStartLED = false;
 
-    key = mki_get_key_from_dd(&key_dd5);
-    ulog_fmt("mki: DD5 %d"CRLF, key);
-
-    key = mki_get_key_from_dd(&key_dd6);
-    ulog_fmt("mki: DD6 %d"CRLF, key);
+    if(mux_is_active_line() && isStartLED == false)
+    {
+        mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_GREEN);
+        isStartLED = true;
+    }
+    else if (mux_is_active_line() == false && isStartLED)
+    {
+        mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_BLACK);
+        isStartLED = false;
+    }
 }
 
-#define LONG_PRESS_TIMING  400
+static void mki_test_task(void)
+{
+    if(mki_test.flag && isTimerExpired(&mki_test.timeout, 1000))
+    {
+        mki_set_pwm_color(MKI_LED_220,   MKI_LED_COLOR_GREEN);
+        mki_set_pwm_color(MKI_LED_BAT,   MKI_LED_COLOR_BLACK);
+        mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_BLACK);
+
+        mki_test.flag = false; 
+        stopTimer(&mki_test.periodic);
+    }
+}
+
+#define LONG_PRESS_TIMING  1000
 
 #define WRONG_PASS_PERIOD  150
 #define NUM_OF_PULSE         3
@@ -500,8 +542,10 @@ void mki_task(void)
 {
     uint16_t key;
     bool isLongPressed = false;
-
+    
+    mki_start_LED_task();
     wrong_pass_task();
+    mki_test_task();
 
     if (dd5_change_tick && (HAL_DiffTick(dd5_change_tick) > 25)) 
     {
@@ -664,6 +708,5 @@ void mki_wrong_pass_event(void)
 
 bool mki_is_global_event(void)
 {
-    return wrong_pass.flag;
+    return wrong_pass.flag || mki_test.flag;
 }
-

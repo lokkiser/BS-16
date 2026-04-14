@@ -270,11 +270,15 @@ void on_timer_1_sec(void)
         ulog(fulog_buf);
         fulog_buf[0] = '\0';
     }
-
+    
+    /*
     if(is_fault())
-      mki_set_pwm_color(MKI_LED_AVAR, MKI_LED_COLOR_ORANGE);
+      mki_set_pwm_color(MKI_LED_FAULT, MKI_LED_COLOR_ORANGE);
     else
-      mki_set_pwm_color(MKI_LED_AVAR, MKI_LED_COLOR_BLACK);
+      mki_set_pwm_color(MKI_LED_FAULT, MKI_LED_COLOR_BLACK);
+    */
+
+    mki_status_LEDs_task();
 }
 
 void on_timer_1_min(void)
@@ -340,6 +344,7 @@ int main(void)
   MX_ADC4_Init();
   MX_SPI1_Init();
   MX_TIM15_Init();
+  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_DAC_MspInit(&hdac1); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?

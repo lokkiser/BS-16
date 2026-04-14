@@ -94,11 +94,11 @@ typedef struct
     uint16_t  d;
     uint16_t  f;
     uint8_t vol;
-} queue_t;
+} buzzer_queue_element_t;
 
 #define MAX_BUZZER_QUEUE        10
 #define MAX_BUZZER_QUEUE_IDX    MAX_BUZZER_QUEUE-1
-static queue_t  q[MAX_BUZZER_QUEUE] = {0};
+static buzzer_queue_element_t  q[MAX_BUZZER_QUEUE] = {0};
 static int8_t idx = MAX_BUZZER_QUEUE_IDX;
 
 static void buzzer_stop(void)

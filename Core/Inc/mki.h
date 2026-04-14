@@ -54,7 +54,7 @@ typedef struct
 #define MKI_LED_16                  16
 #define MKI_LED_220                 17
 #define MKI_LED_BAT                 18
-#define MKI_LED_AVAR                19
+#define MKI_LED_FAULT               19
 #define MKI_LED_START               20
 
 #define MKI_KEY_1                   1
@@ -100,12 +100,11 @@ uint8_t mki_get_led_color(uint8_t number);
 void mki_set_pwm_color(uint8_t number, uint8_t color_id);
 
 void mki_init(void);
-void mki_unpress(uint8_t key);
-void mki_press(uint8_t key);
-void mki_long_press(uint8_t key);
 void mki_task(void);
+void mki_status_LEDs_task(void);
 
 void mki_wrong_pass_event(void);
+void mki_dial_tone_event(void);
 bool mki_is_global_event(void);
 
 #endif /* CORE_INC_MKI_H_ */

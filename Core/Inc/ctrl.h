@@ -83,6 +83,4 @@ void ctrl_init(void);
 
 void ctrl_FullCpltCallback(ADC_HandleTypeDef* hadc);
 
-void dial_tone_stop(void);
-
 #endif /* CORE_INC_CTRL_H_ */

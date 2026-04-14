@@ -128,47 +128,6 @@ static void update_line_leds(void)
     }
 }
 
-static struct
-{
-   timer_t timeout;
-   timer_t periodic;
-   bool    flag; 
-} dial_tone;
-
-void dial_tone_stop(void)
-{
-    dial_tone.flag = false;
-    stopTimer(&dial_tone.periodic);
-    stopTimer(&dial_tone.timeout);
-}
-
-static void dial_tone_task(void)
-{
-    if(isTimerExpired(&dial_tone.periodic, 5000))
-    {
-        if(isTimerExpired(&dial_tone.timeout, 30000))
-        {
-            stopTimer(&dial_tone.periodic);
-            dial_tone.flag = false;
-        }
-
-        buzzer_add_queue(1000, 425, 0xFF);
-    }
-}
-
-static void dial_tone_event(void)
-{
-    if(dial_tone.flag == false)
-    {
-        dial_tone.flag = true;
-        startTimer(&dial_tone.periodic);
-        startSingleShotTimer(&dial_tone.timeout);
-
-        buzzer_flush();
-        buzzer_add_queue(1000, 425, 0xFF);
-    }
-}
-
 void ctrl_task(void)
 {
     HAL_StatusTypeDef status;
@@ -185,8 +144,6 @@ void ctrl_task(void)
     }
 
     HAL_Delay(1); // Чтобы точно завершить обработку прерываний
-
-    dial_tone_task();
 
     Obj_line_t* cur_line = &lines[ctrl_index];
 
@@ -324,7 +281,7 @@ void set_line_event(uint8_t num, line_event_e event)
 
     if(event == EVENT_PANEL_CALL)
     {
-        dial_tone_event();
+        mki_dial_tone_event();
         startSingleShotTimer(&line->timer);
     }
     else if(line->last_event == EVENT_PANEL_CALL)

@@ -27,6 +27,9 @@ static uint16_t raw_keys[2] = {0xFFFF, 0xFFFF};
 static global_event_t wrong_pass = {0};
 static global_event_t mki_test   = {0};
 
+
+static global_event_t dial_tone  = {0};
+
 const led_color_t  MKI_LED_PWM_BLACK     = {MKI_LED_COLOR_BLACK,     0,    0,    0};
 const led_color_t  MKI_LED_PWM_RED       = {MKI_LED_COLOR_RED,    0xFF,    0,    0};
 const led_color_t  MKI_LED_PWM_GREEN     = {MKI_LED_COLOR_GREEN,     0, 0xFF,    0};
@@ -46,7 +49,7 @@ uint8_t mki_get_led_color(uint8_t idx)
     return mki_leds_color[idx];
 }
 
-const led_color_t* mki_get_color_ptr(uint8_t id)
+static const led_color_t* mki_get_color_ptr(uint8_t id)
 {
     switch(id)
     {
@@ -177,7 +180,7 @@ void mki_set_pwm_color(uint8_t number, uint8_t color_id)
             PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM4,  color->r);
             PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM5,  color->b);
         break; 
-        case MKI_LED_AVAR: 
+        case MKI_LED_FAULT:
             PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM6,  color->g);
             PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM7,  color->r);
             PCA9635_write_reg(&led_dd4, PCA9635_REG_PWM8,  color->b);
@@ -198,6 +201,41 @@ void mki_set_all_line_leds(uint8_t color_id)
         mki_set_pwm_color(i, color_id);
     }
 }
+
+static void dial_tone_stop(void)
+{
+    dial_tone.flag = false;
+    stopTimer(&dial_tone.periodic);
+    stopTimer(&dial_tone.timeout);
+}
+
+static void dial_tone_task(void)
+{
+    if(isTimerExpired(&dial_tone.periodic, 5000))
+    {
+        if(isTimerExpired(&dial_tone.timeout, 30000))
+        {
+            stopTimer(&dial_tone.periodic);
+            dial_tone.flag = false;
+        }
+
+        buzzer_add_queue(1000, 425, 0xFF);
+    }
+}
+
+void mki_dial_tone_event(void)
+{
+    if(dial_tone.flag == false)
+    {
+        dial_tone.flag = true;
+        startTimer(&dial_tone.periodic);
+        startSingleShotTimer(&dial_tone.timeout);
+
+        buzzer_flush();
+        buzzer_add_queue(1000, 425, 0xFF);
+    }
+}
+
 
 /*
 void mki_set_led_color(uint8_t number, uint8_t color)
@@ -339,7 +377,7 @@ void mki_set_led_color(uint8_t number, uint8_t color)
             HAL_Delay(1);
             pca9635_send_ledout(&led_dd4, PCA9635_REG_LEDOUT1);
         break;
-        case MKI_LED_AVAR:
+        case MKI_LED_FAULT:
             pca9635_set_ldr(&led_dd4, PCA9635_LDR6, g);
             pca9635_set_ldr(&led_dd4, PCA9635_LDR7, r);
             pca9635_set_ldr(&led_dd4, PCA9635_LDR8, b);
@@ -358,14 +396,14 @@ void mki_set_led_color(uint8_t number, uint8_t color)
 }
 */
 
-uint16_t mki_get_key_from_dd(pca9535_t * pca9535)
+static uint16_t mki_get_key_from_dd(pca9535_t * pca9535)
 {
     uint16_t res = 0;
     if (pca9535_get_reg(pca9535, PCA9535_REG_TYPE_INPUT, PCA9535_PORT_BOTH, (unsigned char *)&res, 2) < 0) return 0;
     return res;
 }
 
-void mki_test_event(void)
+static void mki_test_event(void)
 {
     if(mki_test.flag == false)
     {
@@ -377,7 +415,7 @@ void mki_test_event(void)
 
         mki_set_pwm_color(MKI_LED_220,   MKI_LED_COLOR_WHITE);
         mki_set_pwm_color(MKI_LED_BAT,   MKI_LED_COLOR_WHITE);
-        mki_set_pwm_color(MKI_LED_AVAR,  MKI_LED_COLOR_WHITE);
+        mki_set_pwm_color(MKI_LED_FAULT, MKI_LED_COLOR_WHITE);
         mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_WHITE);
 
         buzzer_make_sound(300, 250, 0xFF);
@@ -386,7 +424,7 @@ void mki_test_event(void)
     }
 }
 
-void mki_unpress(uint8_t key)
+static void mki_unpress(uint8_t key)
 {
     ulog_fmt("mki_unpress %d"CRLF, key);
     if (key <= MKI_KEY_16)          {}
@@ -396,7 +434,7 @@ void mki_unpress(uint8_t key)
     get_key_ptr(key)->state = KEY_IDLE;
 }
 
-void mki_press(uint8_t key)
+static void mki_press(uint8_t key)
 {
     ulog_fmt("mki_press %d"CRLF, key);
     get_key_ptr(key)->state = KEY_PRESSED;
@@ -461,7 +499,7 @@ void mki_press(uint8_t key)
     buzzer_make_sound(100, 500, 0x7F);
 }
 
-void mki_long_press(uint8_t key)
+static void mki_long_press(uint8_t key)
 {
     ulog_fmt("mki_long_press %d"CRLF, key);
     get_key_ptr(key)->state = KEY_LONG_PRESSED;
@@ -475,10 +513,9 @@ void mki_long_press(uint8_t key)
     }
 }
 
-static void mki_start_LED_task(void)
+void mki_status_LEDs_task(void)
 {
     static bool isStartLED = false;
-
     if(mux_is_active_line() && isStartLED == false)
     {
         mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_GREEN);
@@ -488,6 +525,18 @@ static void mki_start_LED_task(void)
     {
         mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_BLACK);
         isStartLED = false;
+    }
+
+    static bool isFaultLED = false;
+    if(is_fault() && isFaultLED == false)
+    {
+        mki_set_pwm_color(MKI_LED_FAULT, MKI_LED_COLOR_ORANGE);
+        isFaultLED = true;
+    }
+    else if(is_fault() == false && isFaultLED)
+    {
+        mki_set_pwm_color(MKI_LED_FAULT, MKI_LED_COLOR_BLACK);
+        isFaultLED = false;
     }
 }
 
@@ -504,13 +553,13 @@ static void mki_test_task(void)
     }
 }
 
-#define LONG_PRESS_TIMING  1000
+#define LONG_PRESS_TIMING     1000
 
-#define WRONG_PASS_PERIOD  150
-#define NUM_OF_PULSE         3
+#define WRONG_PASS_PERIOD      150
+#define NUM_OF_PULSE             3
 #define WRONG_PASS_TIMEOUT    (WRONG_PASS_PERIOD * NUM_OF_PULSE * 2)
 
-void wrong_pass_task(void)
+static void wrong_pass_task(void)
 {
     if(isTimerExpired(&wrong_pass.periodic, WRONG_PASS_PERIOD))
     {
@@ -543,7 +592,8 @@ void mki_task(void)
     uint16_t key;
     bool isLongPressed = false;
     
-    mki_start_LED_task();
+    // mki_start_LED_task();
+    dial_tone_task();
     wrong_pass_task();
     mki_test_task();
 

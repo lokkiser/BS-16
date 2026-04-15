@@ -14,6 +14,8 @@
 #include "local_mic.h"
 #include "local_spk.h"
 #include "buzzer.h"
+#include "password.h"
+
 
 
 //Контроль выходов АУ, их микрофона и динамика
@@ -281,6 +283,7 @@ void set_line_event(uint8_t num, line_event_e event)
 
     if(event == EVENT_PANEL_CALL)
     {
+        password_reset_state();
         mki_dial_tone_event();
         startSingleShotTimer(&line->timer);
     }

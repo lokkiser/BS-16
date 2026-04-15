@@ -515,28 +515,25 @@ static void mki_long_press(uint8_t key)
 
 void mki_status_LEDs_task(void)
 {
-    static bool isStartLED = false;
-    if(mux_is_active_line() && isStartLED == false)
+    if(mki_test.flag == false)
     {
-        mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_GREEN);
-        isStartLED = true;
-    }
-    else if (mux_is_active_line() == false && isStartLED)
-    {
-        mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_BLACK);
-        isStartLED = false;
-    }
+        if(mux_is_active_line() && mki_get_led_color(MKI_LED_START) != MKI_LED_COLOR_GREEN)
+        {
+            mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_GREEN);
+        }
+        else if (mux_is_active_line() == false && mki_get_led_color(MKI_LED_START) != MKI_LED_COLOR_BLACK)
+        {
+            mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_BLACK);
+        }
 
-    static bool isFaultLED = false;
-    if(is_fault() && isFaultLED == false)
-    {
-        mki_set_pwm_color(MKI_LED_FAULT, MKI_LED_COLOR_ORANGE);
-        isFaultLED = true;
-    }
-    else if(is_fault() == false && isFaultLED)
-    {
-        mki_set_pwm_color(MKI_LED_FAULT, MKI_LED_COLOR_BLACK);
-        isFaultLED = false;
+        if(is_fault() && mki_get_led_color(MKI_LED_FAULT) != MKI_LED_COLOR_ORANGE)
+        {
+            mki_set_pwm_color(MKI_LED_FAULT, MKI_LED_COLOR_ORANGE);
+        }
+        else if(is_fault() == false && mki_get_led_color(MKI_LED_START) != MKI_LED_COLOR_BLACK)
+        {
+            mki_set_pwm_color(MKI_LED_FAULT, MKI_LED_COLOR_BLACK);
+        }
     }
 }
 

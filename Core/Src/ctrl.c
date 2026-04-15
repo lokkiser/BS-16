@@ -112,14 +112,14 @@ static void ctrl_button_press(uint8_t num)
 
 static void set_line_led_color(uint8_t num, uint8_t color_id)
 {
-    if(mki_is_global_event() == false && buzzer_is_active() == false)
-    {
-    	if (mki_get_led_color(num-1) != color_id)
-    	{
+	if (mki_get_led_color(num-1) != color_id)
+	{
+        if(mki_is_global_event() == false && buzzer_is_active() == false)
+        {
     	   mki_set_pwm_color(num, color_id);
+	       get_line_obj_ptr(num)->color_id = color_id;
     	}
     }
-	get_line_obj_ptr(num)->color_id = color_id;
 }
 
 static void update_line_leds(void)

@@ -452,8 +452,11 @@ static void mki_press(uint8_t key)
             switch(event)
             {
                 case EVENT_PANEL_CALL:
-                case EVENT_AWAIT_LINE:            
                 if(mux_is_active_line() == false)
+                    set_line_event(key, EVENT_LINE_ON);
+                break;
+
+                case EVENT_AWAIT_LINE:            
                     set_line_event(key, EVENT_LINE_ON);
                 break;
 

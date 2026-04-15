@@ -26,7 +26,7 @@
 #define CTRL_VOLTAGE_BREAK            3600 
 #define CTRL_VOLTAGE_DETECTED         1365 
 // #define CTRL_VOLTAGE_SHORT_CIRCUIT
-#define CTRL_VOLTAGE_SHORT_CIRCUIT     128 
+#define CTRL_VOLTAGE_SHORT_CIRCUIT      10 
 
 static uint8_t  ctrl_index = 0;
 static uint16_t ctrl_adc1_dma[2] = {0};
@@ -304,11 +304,13 @@ void set_line_event(uint8_t num, line_event_e event)
         //no break
         default: break;
 
-        case EVENT_AWAIT_LINE:
-        local_spk_start();
-        //no break            
         case EVENT_PANEL_CALL:
         set_line_p_state(num, P_AWAIT);
+        break;
+
+        case EVENT_AWAIT_LINE:
+        set_line_p_state(num, P_ON);
+        local_spk_start();
         break;
 
         case EVENT_LINE_ON:

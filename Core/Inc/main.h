@@ -109,7 +109,7 @@ void Error_Handler(void);
 #define MPPT_OFF_GPIO_Port GPIOC
 #define MCU_ADC3_1_Pin GPIO_PIN_1
 #define MCU_ADC3_1_GPIO_Port GPIOB
-#define VIZ_Pin GPIO_PIN_10
+#define VIZ_Pin GPIO_PIN_9
 #define VIZ_GPIO_Port GPIOE
 #define MCU_ADC4_3_Pin GPIO_PIN_12
 #define MCU_ADC4_3_GPIO_Port GPIOB

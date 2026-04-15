@@ -248,6 +248,17 @@ void on_timer_25_msec(void)
     mki_task();
     ctrl_task();
     password_task();
+
+    if(mux_is_active_line())
+    {
+        if(HAL_GPIO_ReadPin(VIZ_GPIO_Port, VIZ_Pin))
+            HAL_GPIO_WritePin(mute_OP_GPIO_Port, mute_OP_Pin, GPIO_PIN_RESET);
+        else
+            HAL_GPIO_WritePin(mute_OP_GPIO_Port, mute_OP_Pin, GPIO_PIN_SET);
+    }
+    else
+        HAL_GPIO_WritePin(mute_OP_GPIO_Port, mute_OP_Pin, GPIO_PIN_RESET);
+
 }
 
 void on_timer_50_msec(void)
@@ -1388,8 +1399,8 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, MCU_MUX_CTRL_3_Pin|Avar_Pin|Start_Pin|VIZ_Pin
-                          |MCU_MUX_CTRL_1_Pin|MCU_MUX_CTRL_2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, MCU_MUX_CTRL_3_Pin|Avar_Pin|Start_Pin|MCU_MUX_CTRL_1_Pin
+                          |MCU_MUX_CTRL_2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, MCU_MUX_CTRL_4_Pin|MCU_MUX_CTRL_5_Pin, GPIO_PIN_SET);
@@ -1404,9 +1415,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOD, FREE_GPIO_1_Pin|FREE_GPIO_2_Pin|FREE_GPIO_3_Pin|FLASH_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : MCU_MUX_CTRL_3_Pin MCU_MUX_CTRL_4_Pin MCU_MUX_CTRL_5_Pin Avar_Pin
-                           Start_Pin VIZ_Pin MCU_MUX_CTRL_1_Pin MCU_MUX_CTRL_2_Pin */
+                           Start_Pin MCU_MUX_CTRL_1_Pin MCU_MUX_CTRL_2_Pin */
   GPIO_InitStruct.Pin = MCU_MUX_CTRL_3_Pin|MCU_MUX_CTRL_4_Pin|MCU_MUX_CTRL_5_Pin|Avar_Pin
-                          |Start_Pin|VIZ_Pin|MCU_MUX_CTRL_1_Pin|MCU_MUX_CTRL_2_Pin;
+                          |Start_Pin|MCU_MUX_CTRL_1_Pin|MCU_MUX_CTRL_2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -1430,6 +1441,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(MPPT_OFF_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : VIZ_Pin */
+  GPIO_InitStruct.Pin = VIZ_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(VIZ_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : mute_OP_Pin */
   GPIO_InitStruct.Pin = mute_OP_Pin;

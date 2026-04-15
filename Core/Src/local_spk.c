@@ -84,5 +84,8 @@ bool local_spk_start(void)
 	{
 		res = dacplay_start_dma(&spk_dacplay_data);
 	}
+
+    set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
+    HAL_TIM_Base_Start(&htim15);
 	return res;
 }

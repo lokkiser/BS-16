@@ -759,6 +759,13 @@ void mki_init(void)
         ulog("mki: error DD6 not ready"CRLF);
         set_fault(FAULT_HARDWARE_ERROR);
     }
+    else
+    {
+        uint8_t data = 0x3;
+        pca9535_set_reg(&key_dd6, PCA9535_REG_TYPE_CONFIG, PCA9535_PORT_0, &data, 1);
+        data = 0;
+        pca9535_set_reg(&key_dd6, PCA9535_REG_TYPE_CONFIG, PCA9535_PORT_1, &data, 1);
+    }
 
     for(uint8_t i = MKI_KEY_1; i <= MKI_KEY_CALL; i++)
     {

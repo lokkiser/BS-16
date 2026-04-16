@@ -51,17 +51,13 @@ typedef struct
     timer_t  timer;
     
     adc_state_e   adc_state;
-    // adc_state_e    adc_state_last;
-    // adc_state_e    adc_state_old;
     line_event_e last_event;
     p_line_state_e p_state;
 
     uint8_t num;
     uint8_t color_id;
 
-    // bool isMissed;
     bool isConfigured; 
-    #warning TODO
 } Obj_line_t;
 #pragma pack()
 
@@ -75,8 +71,8 @@ line_event_e get_last_line_event(uint8_t num);
 
 bool is_line_configurated(uint8_t num);
 
-extern float ctrl_out_adc[16];
-extern float ctrl_p_out[16];
+// extern float ctrl_out_adc[16];
+// extern float ctrl_p_out[16];
 
 void ctrl_task(void);
 void ctrl_init(void);

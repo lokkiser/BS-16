@@ -46,6 +46,7 @@ void password_task(void)
             stopTimer(&password.timer);
             mki_wrong_pass_event();
 
+            buzzer_flush();
             buzzer_make_sound(150, 262, 0xFF);
             buzzer_add_queue( 150, 262, 0);
             buzzer_add_queue( 150, 262, 0xFF);

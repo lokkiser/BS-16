@@ -14,7 +14,7 @@
 #include "def_util.h"
 
 #ifndef DACPLAY_DMA_BUF_SIZE
-#define DACPLAY_DMA_BUF_SIZE	640
+// #define DACPLAY_DMA_BUF_SIZE	640
 #endif
 
 #ifndef DACPLAY_ZERO_VALUE

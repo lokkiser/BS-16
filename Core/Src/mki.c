@@ -525,7 +525,7 @@ void mki_status_LEDs_task(void)
         {
             mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_GREEN);
         }
-        else if (mux_is_active_line() == false && mki_get_led_color(MKI_LED_START) != MKI_LED_COLOR_BLACK)
+        else if (mux_is_active_line() == false && mki_get_led_color(MKI_LED_START-1) != MKI_LED_COLOR_BLACK)
         {
             mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_BLACK);
         }
@@ -577,8 +577,6 @@ static void mki_test_task(void)
     }
 }
 
-#define LONG_PRESS_TIMING     1000
-
 #define WRONG_PASS_PERIOD      150
 #define NUM_OF_PULSE             3
 #define WRONG_PASS_TIMEOUT    (WRONG_PASS_PERIOD * NUM_OF_PULSE * 2)
@@ -610,6 +608,8 @@ static void wrong_pass_task(void)
         }
     }
 }
+
+#define LONG_PRESS_TIMING     1000
 
 void mki_task(void)
 {

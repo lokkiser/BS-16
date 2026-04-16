@@ -305,13 +305,14 @@ void set_line_event(uint8_t num, line_event_e event)
         break;
 
         case EVENT_AWAIT_LINE:
+        buzzer_flush();
         set_line_p_state(num, P_ON);
         local_spk_start();
         break;
 
         case EVENT_LINE_ON:
+        buzzer_flush();
         set_line_p_state(num, P_ON);
-
         local_spk_start();
         local_mic_start();
         break;

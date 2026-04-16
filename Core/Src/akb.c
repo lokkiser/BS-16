@@ -13,9 +13,7 @@ static battery_state_e battery_state;
 //VBAT, Напряжение на АКБ. Отслеживать напряжение АКБ.
 static float get_bat_voltage(void)
 {
-    float res = 0.0f;
-    res = (float)get_injected_adc_value(&hadc2, 1, 100) / 4095.0f * 3.3f * 11.0f; // 11 коэффициент делителя
-    return res;
+    return (float)get_injected_adc_value(&hadc2, 1, 100) / 4095.0f * 3.3f * 11.0f; // 11 коэффициент делителя
 }
 
 void akb_task(void)

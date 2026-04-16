@@ -63,6 +63,16 @@ void console_rcv(char * msg)
         console_replay_bool(true);
         NVIC_SystemReset();
     }
+    // else if (strequals(msg, "OUT_ADC")) {
+    //     arr_to_str(&ctrl_out_adc[1], 16, VAR_TYPE_FLOAT, buf, sizeof(buf), false);
+    //     ulog(buf);
+    //     ulog(CRLF);
+    // }
+    // else if (strequals(msg, "P_OUT")) {
+    //     arr_to_str(&ctrl_p_out[1], 16, VAR_TYPE_FLOAT, buf, sizeof(buf), false);
+    //     ulog(buf);
+    //     ulog(CRLF);
+    // }
     else if (strequals(msg, STR_FAULTS)) {
         buf[0] = '\0';
         for (i = 0; i < 128; i++) {

@@ -258,7 +258,6 @@ void on_timer_25_msec(void)
     }
     else
         HAL_GPIO_WritePin(mute_OP_GPIO_Port, mute_OP_Pin, GPIO_PIN_RESET);
-
 }
 
 void on_timer_50_msec(void)
@@ -473,6 +472,8 @@ int main(void)
 
   ulog("BS-16 goto loop"CRLF);
   /* USER CODE END 2 */
+
+  akb_task();
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */

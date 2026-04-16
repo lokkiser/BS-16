@@ -5,7 +5,6 @@
  *      Author: Rafael Boltachev
  */
 
-
 #include "mux.h"
 #include "pca9535.h"
 #include "fault.h"
@@ -14,7 +13,6 @@
 static pca9535_t dd3, dd8;
 
 static line_p_outs_u p_outs = {0};
-// static uint16_t  dd3_value = 0, dd8_value = 0;
 
 void set_mux_line(uint8_t num)
 {

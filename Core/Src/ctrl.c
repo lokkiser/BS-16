@@ -5,7 +5,6 @@
  *      Author: Rafael Boltachev
  */
 
-
 #include "ctrl.h"
 #include "mux.h"
 #include "stm_util.h"
@@ -15,8 +14,6 @@
 #include "local_spk.h"
 #include "buzzer.h"
 #include "password.h"
-
-
 
 //Контроль выходов АУ, их микрофона и динамика
 //Мы переключаем через мультиплексор каналы и через делитель смотрим,
@@ -257,11 +254,10 @@ void ctrl_init(void)
 		lines[i].p_state  = P_IDLE;
 	}
 
-    for(uint8_t i = 0; i < 4;  i++)
-    {
-        #warning hardcoded
-        lines[i].isConfigured = true;
-    }
+    #warning hardcoded
+    lines[0].isConfigured = true;
+    lines[2].isConfigured = true;
+    lines[3].isConfigured = true;
 
     ctrl_index = 0;
     set_mux_line(ctrl_index);

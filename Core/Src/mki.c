@@ -13,6 +13,7 @@
 #include "ctrl.h"
 #include "password.h"
 #include "buzzer.h"
+#include "akb.h"
 
 static pca9635_t led_dd1 = {0}, led_dd2 = {0}, led_dd3 = {0}, led_dd4 = {0};
 static pca9535_t key_dd5 = {0}, key_dd6 = {0};
@@ -520,7 +521,7 @@ void mki_status_LEDs_task(void)
 {
     if(mki_test.flag == false)
     {
-        if(mux_is_active_line() && mki_get_led_color(MKI_LED_START) != MKI_LED_COLOR_GREEN)
+        if(mux_is_active_line() && mki_get_led_color(MKI_LED_START-1) != MKI_LED_COLOR_GREEN)
         {
             mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_GREEN);
         }
@@ -529,13 +530,35 @@ void mki_status_LEDs_task(void)
             mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_BLACK);
         }
 
-        if(is_fault() && mki_get_led_color(MKI_LED_FAULT) != MKI_LED_COLOR_ORANGE)
+        if(is_fault() && mki_get_led_color(MKI_LED_FAULT-1) != MKI_LED_COLOR_ORANGE)
         {
             mki_set_pwm_color(MKI_LED_FAULT, MKI_LED_COLOR_ORANGE);
         }
-        else if(is_fault() == false && mki_get_led_color(MKI_LED_START) != MKI_LED_COLOR_BLACK)
+        else if(is_fault() == false && mki_get_led_color(MKI_LED_START-1) != MKI_LED_COLOR_BLACK)
         {
             mki_set_pwm_color(MKI_LED_FAULT, MKI_LED_COLOR_BLACK);
+        }
+
+        if(is_220_volts() && mki_get_led_color(MKI_LED_220-1) != MKI_LED_COLOR_GREEN)
+        {
+            mki_set_pwm_color(MKI_LED_220, MKI_LED_COLOR_GREEN);
+        }
+        else if(is_220_volts() == false && mki_get_led_color(MKI_LED_220-1) != MKI_LED_COLOR_BLACK)
+        {
+            mki_set_pwm_color(MKI_LED_220, MKI_LED_COLOR_BLACK);
+        }
+
+        if(get_akb_state() == BATTERY_CHARGED && mki_get_led_color(MKI_LED_BAT-1) != MKI_LED_COLOR_GREEN)
+        {
+            mki_set_pwm_color(MKI_LED_BAT, MKI_LED_COLOR_GREEN);
+        }
+        else if(get_akb_state() == BATTERY_LOOSE && mki_get_led_color(MKI_LED_BAT-1) != MKI_LED_COLOR_ORANGE)
+        {
+            mki_set_pwm_color(MKI_LED_BAT, MKI_LED_COLOR_ORANGE);
+        }
+        else if(get_akb_state() == NO_BATTERY && mki_get_led_color(MKI_LED_BAT-1) != MKI_LED_COLOR_BLACK)
+        {
+            mki_set_pwm_color(MKI_LED_BAT, MKI_LED_COLOR_BLACK);
         }
     }
 }
@@ -544,9 +567,10 @@ static void mki_test_task(void)
 {
     if(mki_test.flag && isTimerExpired(&mki_test.timeout, 1000))
     {
-        mki_set_pwm_color(MKI_LED_220,   MKI_LED_COLOR_GREEN);
+        mki_set_pwm_color(MKI_LED_220,   MKI_LED_COLOR_BLACK);
         mki_set_pwm_color(MKI_LED_BAT,   MKI_LED_COLOR_BLACK);
         mki_set_pwm_color(MKI_LED_START, MKI_LED_COLOR_BLACK);
+        mki_set_pwm_color(MKI_LED_FAULT, MKI_LED_COLOR_BLACK);
 
         mki_test.flag = false; 
         stopTimer(&mki_test.periodic);
@@ -721,9 +745,6 @@ void mki_init(void)
     {
         mki_set_pwm_color(i, MKI_LED_COLOR_BLACK);
     }
-
-    // Init of LED colors
-    mki_set_pwm_color(MKI_LED_220, MKI_LED_COLOR_GREEN);
 
     pca9535_init(&key_dd5, MKI_I2C_HANDLE, MKI_DD5_ADDERESS);
     if (pca9535_is_ready(&key_dd5) != 0) 

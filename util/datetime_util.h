@@ -31,10 +31,10 @@ date_time_t str2date_time(char* str);
 //тайм стамп
 uint64_t timestamp(date_time_t* date_time);
 
-#define YEAR_GOD(y) (y > 2000)
-#define MONTH_GOD(m) ((m > 0) && (m < 13))
-#define DATE_GOD(d) ((d > 0) && (d < 32))
-#define HOUR_GOD(h) (h < 25)
+#define YEAR_GOD(y)   (y > 2000)
+#define MONTH_GOD(m) ((m > 0) && (m <= 12))
+#define DATE_GOD(d)  ((d > 0) && (d <= 31))
+#define HOUR_GOD(h)  (h <= 23)
 #define MINUTE_GOD(m) (m < 60)
 #define SECOND_GOD(s) (s < 60)
 

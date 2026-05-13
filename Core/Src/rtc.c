@@ -1,109 +1,109 @@
-/*
- * rtc.c
- *
- *  Created on: 7 мар. 2025 г.
- *      Author: Rafael Boltachev
- */
-
+/* USER CODE BEGIN Header */
+/**
+  ******************************************************************************
+  * @file    rtc.c
+  * @brief   This file provides code for the configuration
+  *          of the RTC instances.
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2026 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
+/* USER CODE END Header */
+/* Includes ------------------------------------------------------------------*/
 #include "rtc.h"
-#include <string.h>
-#include <stdio.h>
-#include "str_util.h"
-#include "stm_util.h"
 
+/* USER CODE BEGIN 0 */
 
-static char __rtc_read_datetime_str[22];
+/* USER CODE END 0 */
 
+RTC_HandleTypeDef hrtc;
 
-void rtc_init(void)
+/* RTC init function */
+void MX_RTC_Init(void)
 {
-	RTC_BQ32000_Init(RTC_I2C_HANDLE);
+
+  /* USER CODE BEGIN RTC_Init 0 */
+
+  /* USER CODE END RTC_Init 0 */
+
+  /* USER CODE BEGIN RTC_Init 1 */
+
+  /* USER CODE END RTC_Init 1 */
+
+  /** Initialize RTC Only
+  */
+  hrtc.Instance = RTC;
+  hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
+  hrtc.Init.AsynchPrediv = 127;
+  hrtc.Init.SynchPrediv = 255;
+  hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+  hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
+  hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+  hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+  hrtc.Init.OutPutPullUp = RTC_OUTPUT_PULLUP_NONE;
+  if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RTC_Init 2 */
+
+  /* USER CODE END RTC_Init 2 */
+
 }
 
-// RTC_Time в стринг
-void rtcdatetime2str(RTC_Time* rtcTim, char* buf, uint16_t buf_size, bool with_second)
+void HAL_RTC_MspInit(RTC_HandleTypeDef* rtcHandle)
 {
-    if (with_second ) snprintf(buf, buf_size, "20%02d-%02d-%02dT%02d:%02d:%02d", rtcTim->year, rtcTim->month, rtcTim->day, rtcTim->hours, rtcTim->minutes, rtcTim->seconds);
-    else snprintf(buf, buf_size, "20%02d-%02d-%02dT%02d:%02d", rtcTim->year, rtcTim->month, rtcTim->day, rtcTim->hours, rtcTim->minutes);
+
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+  if(rtcHandle->Instance==RTC)
+  {
+  /* USER CODE BEGIN RTC_MspInit 0 */
+
+  /* USER CODE END RTC_MspInit 0 */
+
+  /** Initializes the peripherals clocks
+  */
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+    PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    /* RTC clock enable */
+    __HAL_RCC_RTC_ENABLE();
+    __HAL_RCC_RTCAPB_CLK_ENABLE();
+  /* USER CODE BEGIN RTC_MspInit 1 */
+
+  /* USER CODE END RTC_MspInit 1 */
+  }
 }
 
-//стринг в RTC_Time
-bool str2rtcdatetime(char* str, RTC_Time* rtcTime)
+void HAL_RTC_MspDeInit(RTC_HandleTypeDef* rtcHandle)
 {
-	char* ptr;
-	int year;
 
-	memset(rtcTime, 0, sizeof(RTC_Time));
+  if(rtcHandle->Instance==RTC)
+  {
+  /* USER CODE BEGIN RTC_MspDeInit 0 */
 
-	year = str2int(str);
-	if (year < 2000) return false;
-	rtcTime->year = year - 2000;
+  /* USER CODE END RTC_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_RTC_DISABLE();
+    __HAL_RCC_RTCAPB_CLK_DISABLE();
+  /* USER CODE BEGIN RTC_MspDeInit 1 */
 
-	ptr = strright(str, strlen(str), "-");
-	if (!ptr) return false;
-	rtcTime->month = str2int(ptr);
-
-	ptr = strright(ptr, strlen(str),  "-");
-	if (!ptr) return false;
-	rtcTime->day = str2int(ptr);
-
-	ptr = strright(ptr, strlen(str),  "T");
-	if (ptr) rtcTime->hours = str2int(ptr);
-
-	ptr = strright(ptr, strlen(str),  ":");
-	if (ptr) rtcTime->minutes = str2int(ptr);
-
-	ptr = strright(ptr, strlen(str),  ":");
-	if (ptr) rtcTime->seconds = str2int(ptr);
-
-	return true;
+  /* USER CODE END RTC_MspDeInit 1 */
+  }
 }
 
+/* USER CODE BEGIN 1 */
 
-//Прочитать дату и время с RTC в стринг
-char* rtc_read_datetime_str(bool with_second)
-{
-	RTC_Time rtcTime;
-
-    RTC_BQ32000_ReadTime(RTC_I2C_HANDLE, &rtcTime);
-
-    rtcdatetime2str(&rtcTime, __rtc_read_datetime_str, sizeof(__rtc_read_datetime_str), with_second);
-
-	return __rtc_read_datetime_str;
-}
-
-//Установка RTC из строки
-void rtc_set_datetime_str(char* str)
-{
-	RTC_Time rtcTime;
-
-	if (!str2rtcdatetime(str, &rtcTime)) {
-		ulog("rtc: error str2rtctime"CRLF);
-		return;
-	}
-
-	ulog_fmt("rtc: set datetime  %d-%d-%d %d:%d:%d"CRLF, rtcTime.year, rtcTime.month, rtcTime.day, rtcTime.hours, rtcTime.minutes, rtcTime.seconds);
-	RTC_BQ32000_SetTime(RTC_I2C_HANDLE, &rtcTime);
-}
-
-
-// RTC_Time в стринг (только время)
-void rtctime2str(RTC_Time* rtcTim, char* buf, uint16_t buf_size, bool with_second)
-{
-    if (with_second ) snprintf(buf, buf_size, "%02d:%02d:%02d", rtcTim->hours, rtcTim->minutes, rtcTim->seconds);
-    else snprintf(buf, buf_size, "%02d:%02d", rtcTim->hours, rtcTim->minutes);
-}
-
-
-//Прочитать время с RTC в стринг
-char* rtc_read_time_str(bool with_second)
-{
-	RTC_Time rtcTime;
-
-    RTC_BQ32000_ReadTime(RTC_I2C_HANDLE, &rtcTime);
-
-    rtctime2str(&rtcTime, __rtc_read_datetime_str, sizeof(__rtc_read_datetime_str), with_second);
-
-	return __rtc_read_datetime_str;
-}
-
+/* USER CODE END 1 */

@@ -52,7 +52,10 @@ USBD_HandleTypeDef hUsbDevice;
  * -- Insert your external function declaration here --
  */
 /* USER CODE BEGIN 1 */
-
+void MX_USB_DEVICE_DeInit(void)
+{
+    USBD_DeInit(&hUsbDevice);
+}
 /* USER CODE END 1 */
 
 /**

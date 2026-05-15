@@ -55,6 +55,7 @@
 #include "password.h"
 #include "buzzer.h"
 #include "usb_device.h"
+#include "usb_terminal.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -209,6 +210,11 @@ void HAL_DAC_ErrorCallbackCh1(DAC_HandleTypeDef *hdac)
 
 void HAL_DACEx_ErrorCallbackCh2(DAC_HandleTypeDef *hdac)
 {
+}
+
+void USB_CDC_RxCallback(uint8_t* buf, uint32_t len)
+{
+    Terminal_USB_CDC_Callback(buf, len);
 }
 
 void on_timer_25_msec(void)

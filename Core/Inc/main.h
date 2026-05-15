@@ -166,6 +166,9 @@ extern TIM_HandleTypeDef htim15;
 extern bool fatfs_mount;
 
 void filelog(char* str);
+
+void USB_CDC_RxCallback(uint8_t* buf, uint32_t len);
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

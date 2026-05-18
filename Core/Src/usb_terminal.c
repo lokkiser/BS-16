@@ -5,12 +5,28 @@ static terminal_state_e state;
 static char terminal_tx_buf[256] = "";
 
 static timer_t connection_timer;
+static timer_t reqTimer;
 
+extern uint32_t magic_boot;
+
+void Terminal_ReqBootloaderJump(void)
+{
+    startSingleShotTimer(&reqTimer);
+
+    magic_boot = 0xB00D0473;
+}
 
 void Terminal_Process(void)
 {
     if(state == TERMINAL_INFO && isTimerExpired(&connection_timer, 2000))
         state = TERMINAL_IDLE;
+
+    if(isTimerExpired(&reqTimer, 500))
+    {
+        HAL_NVIC_SystemReset(); 
+
+        while (1); // Execution stops here; MCU resets immediately        
+    }
 }
 
 static void Terminal_MsgInvalid(void)
@@ -29,13 +45,10 @@ static void Terminal_MsgUpdate(void)
 {
     state = TERMINAL_UPDATE;
 
-    sprintf(terminal_tx_buf, "BS-16: Starting DFU Bootloader...\r\n");
+    sprintf(terminal_tx_buf,  "BS-16: Starting DFU Bootloader...\r\n" );
     CDC_Transmit(0, (uint8_t*)terminal_tx_buf, strlen(terminal_tx_buf));  // hardcoded CDC 0
 
-    // Device_ReqBootloaderJump();   
-    HAL_Delay(5);
-    JumpToBootloader();  
-    //дальше программа не исполняется
+    Terminal_ReqBootloaderJump();   
 }
 
 static void Terminal_InfoReq(void)

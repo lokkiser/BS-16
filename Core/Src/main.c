@@ -56,6 +56,7 @@
 #include "buzzer.h"
 #include "usb_device.h"
 #include "usb_terminal.h"
+#include "default_bootloader_jump.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -90,6 +91,8 @@ void SystemClock_Config(void);
 bool fatfs_mount = false;
 
 extern uint32_t dd5_change_tick, dd6_change_tick;
+
+uint32_t magic_boot __attribute__ ((section (".noinit")));
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
@@ -237,6 +240,7 @@ void on_timer_25_msec(void)
 void on_timer_50_msec(void)
 {
     buzzer_task();
+    Terminal_Process();
     // memplay_task();
 }
 
@@ -286,6 +290,8 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
+  if(magic_boot == 0xB00D0473)
+    JumpToBootloader();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/

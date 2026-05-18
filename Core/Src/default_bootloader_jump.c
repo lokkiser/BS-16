@@ -1,60 +1,35 @@
 #include "default_bootloader_jump.h"
 
+extern uint32_t magic_boot;
 
 void JumpToBootloader(void)
 {
-  // Reset USB
-  MX_USB_DEVICE_DeInit();
+    // Clear the token so the device doesn't loop into the bootloader forever
+    // TAMP->BKP0R = 0x00000000; 
 
-  HAL_DeInit();
+    magic_boot = 0;
 
-  HAL_Delay(5);
+    // Lock backup access again
+    PWR->CR1 &= ~PWR_CR1_DBP;
 
-  /* Disable all interrupts */
-  __disable_irq();
+    // Turn on SYSCFG to allow memory mapping
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+    
+    // Remap System Memory to 0x00000000
+    SYSCFG->MEMRMP = SYSCFG_MEMRMP_MEM_MODE_0; // Maps System Flash to 0x0
 
-  /* Disable Systick timer */
-  HAL_RCC_DeInit();
+    __DSB();
+    __ISB();
 
-  for (IRQn_Type i = 0; i < FMAC_IRQn; i++) 
-  { 
-    NVIC_DisableIRQ(i);
-    NVIC_ClearPendingIRQ(i);
-  }
+    // Reset Vector Table Offset Register
+    SCB->VTOR = 0x00000000;
 
-  // IMPORTANT! Disable Systick AFTER HAL_RCC_Deinit
-  // Some devices were locking up inside of HAL_RCC_DeInit
+    uint32_t p_stack_pointer = *(volatile uint32_t *)0x1FFF0000;
+    void (*p_reset_handler)(void) = (void (*)(void))(*(volatile uint32_t *)(0x1FFF0000 + 4));
 
-  // Disable Systick
-  SysTick->CTRL = 0;
-  SysTick->LOAD = 0;
-  SysTick->VAL  = 0;
-  SCB->ICSR |= SCB_ICSR_PENDSTCLR_Msk;
+    // Set stack pointer and jump
+    __set_MSP(p_stack_pointer);
+    p_reset_handler();
 
-  __enable_irq();
-
-  /* ARM Cortex-M Programming Guide to Memory Barrier Instructions.*/
-  __DSB();
-
-  __HAL_SYSCFG_REMAPMEMORY_SYSTEMFLASH();
-
-  typedef struct 
-  {
-    void  *SP;
-    void (*PC)(void);
-  } SP_PC_t;
-  
-  #define SYSBOOT ((SP_PC_t*)0x1FFF0000)
-  
-  SCB->VTOR = (uint32_t)SYSBOOT;
-
-  /* Remap is bot visible at once. Execute some unrelated command! */
-  __DSB();
-  __ISB();
-
-  __set_MSP((uint32_t)SYSBOOT->SP);
-  SYSBOOT->PC();
-  
-  while (1)
-  {}
+    while (1); // Code never returns here
 }

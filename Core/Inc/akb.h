@@ -19,7 +19,7 @@ typedef enum
 
 void akb_task(void);
 void akb_init(void);
-
+void bat_con();
 bool akb_is_charged(void);
 bool is_220_volts(void);
 battery_state_e get_akb_state(void);

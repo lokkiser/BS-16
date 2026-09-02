@@ -55,6 +55,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern PCD_HandleTypeDef hpcd_USB_FS;
 extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_adc2;
 extern DMA_HandleTypeDef hdma_adc3;
@@ -64,16 +65,14 @@ extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc2;
 extern ADC_HandleTypeDef hadc3;
 extern ADC_HandleTypeDef hadc4;
-extern ADC_HandleTypeDef hadc5;
-extern DMA_HandleTypeDef hdma_dac1_ch1;
 extern DMA_HandleTypeDef hdma_dac1_ch2;
 extern DMA_HandleTypeDef hdma_dac2_ch1;
 extern DAC_HandleTypeDef hdac1;
 extern DAC_HandleTypeDef hdac2;
+extern DMA_HandleTypeDef hdma_sai1_a;
 extern TIM_HandleTypeDef htim15;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart3;
-extern PCD_HandleTypeDef hpcd_USB_FS;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -224,7 +223,7 @@ void DMA1_Channel1_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
 
   /* USER CODE END DMA1_Channel1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_adc5);
+  HAL_DMA_IRQHandler(&hdma_sai1_a);
   /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
 
   /* USER CODE END DMA1_Channel1_IRQn 1 */
@@ -238,7 +237,7 @@ void DMA1_Channel2_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel2_IRQn 0 */
 
   /* USER CODE END DMA1_Channel2_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_dac1_ch1);
+  HAL_DMA_IRQHandler(&hdma_adc5);
   /* USER CODE BEGIN DMA1_Channel2_IRQn 1 */
 
   /* USER CODE END DMA1_Channel2_IRQn 1 */
@@ -358,21 +357,6 @@ void USB_LP_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles EXTI line[9:5] interrupts.
-  */
-void EXTI9_5_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI9_5_IRQn 0 */
-
-  /* USER CODE END EXTI9_5_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(INT1_Pin);
-  HAL_GPIO_EXTI_IRQHandler(INT2_Pin);
-  /* USER CODE BEGIN EXTI9_5_IRQn 1 */
-
-  /* USER CODE END EXTI9_5_IRQn 1 */
-}
-
-/**
   * @brief This function handles TIM1 break interrupt and TIM15 global interrupt.
   */
 void TIM1_BRK_TIM15_IRQHandler(void)
@@ -412,20 +396,6 @@ void USART3_IRQHandler(void)
   /* USER CODE BEGIN USART3_IRQn 1 */
 
   /* USER CODE END USART3_IRQn 1 */
-}
-
-/**
-  * @brief This function handles EXTI line[15:10] interrupts.
-  */
-void EXTI15_10_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
-
-  /* USER CODE END EXTI15_10_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(CLK_IRQ_Pin);
-  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
-
-  /* USER CODE END EXTI15_10_IRQn 1 */
 }
 
 /**
@@ -485,17 +455,18 @@ void ADC4_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles ADC5 global interrupt.
+  * @brief This function handles DMAMUX overrun interrupt.
   */
-void ADC5_IRQHandler(void)
+void DMAMUX_OVR_IRQHandler(void)
 {
-  /* USER CODE BEGIN ADC5_IRQn 0 */
+  /* USER CODE BEGIN DMAMUX_OVR_IRQn 0 */
 
-  /* USER CODE END ADC5_IRQn 0 */
-  HAL_ADC_IRQHandler(&hadc5);
-  /* USER CODE BEGIN ADC5_IRQn 1 */
+  /* USER CODE END DMAMUX_OVR_IRQn 0 */
+  // Handle DMA1_Channel2
+  HAL_DMAEx_MUX_IRQHandler(&hdma_adc5);
+  /* USER CODE BEGIN DMAMUX_OVR_IRQn 1 */
 
-  /* USER CODE END ADC5_IRQn 1 */
+  /* USER CODE END DMAMUX_OVR_IRQn 1 */
 }
 
 /**

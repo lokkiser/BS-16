@@ -14,6 +14,7 @@
 
 #include "main.h"
 
+extern uint8_t pca_mb_init_config[2];
 
 //Выход прерывания с открытым стоком микросхем PCA9535 и PCA9535C активируется,
 //когда любое состояние входа отличается от соответствующего состояния регистра входного порта,
@@ -42,6 +43,19 @@
 #define PCA9535_REG_CONFIG_0    0x06U
 #define PCA9535_REG_CONFIG_1    0x07U
 
+#define DD5_IB    				0x00U
+#define DD6_IB     				0x01U
+#define DD3_MB    				0x02U
+#define DD4_MB     				0x03U
+#define DD3_MB_i2c    			hi2c3
+#define DD4_MB_i2c     			hi2c3
+#define DD5_IB_i2c    			hi2c3
+#define DD6_IB_i2c     			hi2c3
+
+/*#define DD3_MB    				0x01U
+#define DD4_MB     				0x00U
+#define DD3_MB_i2c    			hi2c3
+#define DD4_MB_i2c     			hi2c3*/
 /* Export typedef ------------------------------------------------------------*/
 
 //typedef struct pca9535_s pca9535_t;
@@ -75,7 +89,7 @@ typedef struct pca9535_s
     bool busy;
     bool err;
 } pca9535_t;
-
+extern pca9535_t pca9535_t_DD3_MB, pca9535_t_DD4_MB, pca9535_t_2, pca9535_t_3;
 /* Export functions prototypes -----------------------------------------------*/
 
 /**

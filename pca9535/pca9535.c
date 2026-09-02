@@ -13,6 +13,8 @@
 
 #define PCA9535_I2C_TIMEOUT		10
 
+pca9535_t pca9535_t_DD3_MB, pca9535_t_DD4_MB, pca9535_t_2, pca9535_t_3;
+uint8_t pca_mb_init_config[2] = {};
 /**
  * @brief       Get data from I/O port expander
  * @param[in]   dev_idx     Device index on the board from 0 to

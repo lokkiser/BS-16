@@ -10,7 +10,7 @@
 #include "fault.h"
 #include "math_util.h"
 
-static pca9535_t dd3, dd8;
+static pca9535_t dd3, dd4;
 
 static line_p_outs_u p_outs = {0};
 
@@ -45,15 +45,15 @@ void set_dd3(uint16_t value)
     p_outs.data.dd3 = value;
 }
 
-//установить на мс DD8 код value
-void set_dd8(uint16_t value)
+//установить на мс dd4 код value
+void set_dd4(uint16_t value)
 {
-    pca9535_set_reg(&dd8, PCA9535_REG_TYPE_OUTPUT, PCA9535_PORT_BOTH, (uint8_t*)&value, 2);
-    p_outs.data.dd8 = value;
+    pca9535_set_reg(&dd4, PCA9535_REG_TYPE_OUTPUT, PCA9535_PORT_BOTH, (uint8_t*)&value, 2);
+    p_outs.data.dd4 = value;
 }
 
 //включить/выключить линию on_p = 1...16
-void set_on_p(uint8_t num, p_line_state_e state)
+/*void set_on_p(uint8_t num, p_line_state_e state) //TO DO
 {
     if(state == P_ON)
         mux_cancel_all();
@@ -94,44 +94,51 @@ void set_on_p(uint8_t num, p_line_state_e state)
         break;
         case 9:
             p_outs.lines.p_9 = state;
-            set_dd8(p_outs.data.dd8);
+            set_dd4(p_outs.data.dd4);
         break;
         case 10:
             p_outs.lines.p_10 = state;
-            set_dd8(p_outs.data.dd8);
+            set_dd4(p_outs.data.dd4);
         break;
         case 11:
             p_outs.lines.p_11 = state;
-            set_dd8(p_outs.data.dd8);
+            set_dd4(p_outs.data.dd4);
         break;
         case 12:
             p_outs.lines.p_12 = state;
-            set_dd8(p_outs.data.dd8);
+            set_dd4(p_outs.data.dd4);
         break;
         case 13:
             p_outs.lines.p_13 = state;
-            set_dd8(p_outs.data.dd8);
+            set_dd4(p_outs.data.dd4);
         break;
         case 14:
             p_outs.lines.p_14 = state;
-            set_dd8(p_outs.data.dd8);
+            set_dd4(p_outs.data.dd4);
         break;
         case 15:
             p_outs.lines.p_15 = state;
-            set_dd8(p_outs.data.dd8);
+            set_dd4(p_outs.data.dd4);
         break;
         case 16:
             p_outs.lines.p_16 = state;
-            set_dd8(p_outs.data.dd8);
+            set_dd4(p_outs.data.dd4);
         break;
 
         default: break;
     }
 }
+*/
+
+void set_on_p(uint8_t num, p_line_state_e state)
+{
+
+}
+
 
 p_line_state_e get_on_p(uint8_t on_p)
 {
-    uint32_t res = (p_outs.data.dd8 << 16) | p_outs.data.dd3;
+    uint32_t res = (p_outs.data.dd4 << 16) | p_outs.data.dd3;
     res >>= (on_p-1)*2; 
 
     return res&0x3;
@@ -155,31 +162,51 @@ void mux_init(void)
     
     HAL_Delay(1);
 
-    pca9535_init(&dd8, MUX_I2C_HANDLE, MUX_DD8_ADDERESS);
-    if (pca9535_is_ready(&dd8) != 0) 
+    pca9535_init(&dd4, MUX_I2C_HANDLE, MUX_DD4_ADDERESS);
+    if (pca9535_is_ready(&dd4) != 0)
     {
         ulog("mux: error DD4 not ready"CRLF);
         set_fault(FAULT_HARDWARE_ERROR);
     }
     HAL_Delay(1);
-    pca9535_set_reg(&dd8, PCA9535_REG_TYPE_CONFIG, PCA9535_PORT_BOTH, (uint8_t*)&init, 2);
+    pca9535_set_reg(&dd4, PCA9535_REG_TYPE_CONFIG, PCA9535_PORT_BOTH, (uint8_t*)&init, 2);
     HAL_Delay(1);
-    set_dd8(0);
+    set_dd4(0);
 }
+
+/*void init_pca9535()
+{
+	//pca9535_init(pca9535_t_DD3_MB, &DD3_MB_i2c, DD3_MB);
+	//pca9535_t_DD3_MB.idx = &hi2c3;
+	//pca9535_t_DD4_MB.idx = &hi2c3;
+	//pca9535_t_DD3_MB.addr = main_PCA9535_0;
+	//pca9535_t_DD4_MB.addr = main_PCA9535_1;
+
+	extenders_error = pca9535_init(&pca9535_t_DD4_MB, &DD4_MB_i2c, main_PCA9535_0>>1);
+	//pca9535_set_reg(pca9535_t_DD3_MB, PCA9535_REG_CONFIG_0, pca_mb_init_config, PCA9535_PORT_BOTH);
+	//pca9535_set_reg(pca9535_t_DD3_MB, PCA9535_REG_CONFIG_1, pca_mb_init_config, PCA9535_PORT_BOTH);
+	extenders_error = pca9535_get_reg(&pca9535_t_DD4_MB, PCA9535_REG_TYPE_CONFIG, PCA9535_PORT_0, extenders_debug_reg_read, 1);
+	extenders_error = pca9535_set_reg(&pca9535_t_DD4_MB, PCA9535_REG_TYPE_CONFIG, PCA9535_PORT_0, pca_mb_init_config, 1);
+	extenders_error = pca9535_set_reg(&pca9535_t_DD4_MB, PCA9535_REG_TYPE_CONFIG, PCA9535_PORT_1, pca_mb_init_config, 1);
+	//extenders_error = pca9535_get_reg(&pca9535_t_DD4_MB, PCA9535_REG_CONFIG_0, PCA9535_PORT_0, extenders_debug_reg_read, 1);
+	//extenders_error = pca9535_set_reg(&pca9535_t_DD4_MB, PCA9535_REG_CONFIG_0, PCA9535_PORT_0, pca_mb_init_config, 1);
+	//extenders_error = pca9535_set_reg(&pca9535_t_DD4_MB, PCA9535_REG_CONFIG_1, PCA9535_PORT_1, pca_mb_init_config, 1);
+}
+*/
 
 bool mux_is_active_line(void)
 {
-    return !!((p_outs.data.dd3 & 0x5555) || (p_outs.data.dd8 & 0x5555));
+    return !!((p_outs.data.dd3 & 0x5555) || (p_outs.data.dd4 & 0x5555));
 }
 
 bool mux_is_awaiting_line(void)
 {
-    return !!((p_outs.data.dd3 & 0xAAAA) || (p_outs.data.dd8 & 0xAAAA));
+    return !!((p_outs.data.dd3 & 0xAAAA) || (p_outs.data.dd4 & 0xAAAA));
 }
 
 bool mux_active_line_num(uint8_t* num)
 {
-    uint32_t bin = ((p_outs.data.dd8 << 16) | p_outs.data.dd3) & 0x55555555;
+    uint32_t bin = ((p_outs.data.dd4 << 16) | p_outs.data.dd3) & 0x55555555;
     
     for(uint8_t i = 0; i < 16; i++)
     {
@@ -196,6 +223,6 @@ bool mux_active_line_num(uint8_t* num)
 void mux_cancel_all(void)
 {
     set_dd3(p_outs.data.dd3 & ~0x5555);
-    set_dd8(p_outs.data.dd8 & ~0x5555);
+    set_dd4(p_outs.data.dd4 & ~0x5555);
 }
 

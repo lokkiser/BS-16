@@ -12,8 +12,8 @@
 #include "stm_util.h"
 
 #define MUX_I2C_HANDLE		&hi2c3
-#define MUX_DD3_ADDERESS	(0x21)     
-#define MUX_DD8_ADDERESS	(0x20)     
+#define MUX_DD3_ADDERESS	(0x46)>>1
+#define MUX_DD4_ADDERESS	(0x44)>>1
 
 typedef enum
 {
@@ -29,7 +29,7 @@ typedef union
     struct
     {
         uint16_t dd3;
-        uint16_t dd8;
+        uint16_t dd4;
     } data;
 
     struct 
@@ -141,5 +141,8 @@ bool mux_is_active_line(void);
 bool mux_is_awaiting_line(void);
 bool mux_active_line_num(uint8_t* num);
 void mux_cancel_all(void);
+
+void set_dd3(uint16_t value);
+void set_dd4(uint16_t value);
 
 #endif /* CORE_INC_MUX_H_ */

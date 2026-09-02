@@ -27,7 +27,8 @@ bool flash_init(void)
 	{
 		W25QXX_result = w25qxx_init(&w25qxx, &FLASH_SPI_HANDLE, FLASH_CS_GPIO, FLASH_CS_PIN);
 		cnt--;
-		HAL_IWDG_Refresh(&hiwdg);
+		//TODO
+		//HAL_IWDG_Refresh(&hiwdg);
 	} while ((W25QXX_result != W25QXX_Ok) && cnt);
 
 	//ulog_fmt("w25qxx_init()=%d"CRLF, W25QXX_result);

@@ -23,5 +23,6 @@ void akb_init(void);
 bool akb_is_charged(void);
 bool is_220_volts(void);
 battery_state_e get_akb_state(void);
-
+extern volatile float voltage_bat;
+extern volatile uint8_t en_bat;
 #endif /* CORE_INC_AKB_H_ */

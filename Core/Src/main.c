@@ -22,16 +22,17 @@
 #include "dac.h"
 #include "dma.h"
 #include "i2c.h"
-#include "iwdg.h"
 #include "rtc.h"
+#include "sai.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
-#include "usb.h"
+#include "usb_device.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "pca9535.h"
 #include "stm_util.h"
 #include "mki.h"
 #include "mux.h"
@@ -55,7 +56,9 @@
 #include "password.h"
 #include "buzzer.h"
 #include "usb_device.h"
-#include "usb_terminal.h"
+#include "TAS5720.h"
+#include "math.h"
+//#include "usb_terminal.h"
 #include "default_bootloader_jump.h"
 /* USER CODE END Includes */
 
@@ -66,6 +69,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define TOTAL_SAMPLES 2048
+#define TDM_CHANNELS  8 // Например, стандартный TDM-8 frame
+#define AUDIO_BUF_SIZE 4096
 
 /* USER CODE END PD */
 
@@ -78,6 +84,38 @@
 
 /* USER CODE BEGIN PV */
 
+uint8_t testreg[2] = {255, 255};
+uint8_t testreg2[2] = {0, 0};
+uint8_t configreg[2] = {0, 0};
+
+uint32_t testsound[256] = {};
+uint16_t testval = 1;
+uint16_t _err_sai = 0;
+uint8_t await_debug = 1;
+// Итоговый размер буфера: 2048 фреймов * 8 каналов = 16384 элементов
+uint32_t test_buffer[TOTAL_SAMPLES * TDM_CHANNELS];
+static uint16_t silence_buffer[64] = {0};
+
+uint8_t debug_status = 0;
+uint8_t refill_arr = 1;
+//uint8_t test_f = 24;
+uint8_t test_f = 2; // писк
+uint8_t ch_index = 0;
+//uint32_t sin_amp = 64;  //1000000 - 11000000
+uint32_t sin_amp = 16000;
+uint32_t dc_offset = 0x7FFFFF;// + 0x400000;  // 0ptimal value ~7V 1100000 - 1400000 1000000 900000
+//uint32_t dc_offset = 900000;// будет развязка по переменке
+uint32_t dc_offset_step = 100;  //шаг повышения напряжения до оптимума
+uint8_t oc_reset = 0;
+uint8_t disable_sound = 1;
+uint16_t zero_index = 0; //для плавного смыкания
+float zero_nearness = 10.0; // что мы считаем нулём.
+
+uint8_t extenders_debug_reg = 0;
+uint8_t extenders_debug_reg_read[8] = {};
+uint16_t debug_adc[8] = {};
+int8_t extenders_error = 0;
+int8_t test_output = 255;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -89,6 +127,89 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 bool fatfs_mount = false;
+bool debug_int_spk = false;
+
+/*typedef struct pca9535_s
+{
+	I2C_HandleTypeDef* idx;
+    unsigned short addr;
+    bool busy;
+    bool err;
+} pca9535_t;*/
+//pca9535_t_0, pca9535_t_1, pca9535_t_2, pca9535_t_3;
+//DD4 IO0_0
+
+//pca9535_set_reg(pca9535_t * pca9535, pca9535_reg_type_t reg_type, pca9535_port_t port, unsigned char *value, int len)
+void test_pin(uint8_t _state)
+{
+	extenders_debug_reg = _state;
+	pca9535_set_reg(&pca9535_t_DD4_MB, PCA9535_REG_TYPE_OUTPUT, PCA9535_PORT_0, &extenders_debug_reg, 1);
+	//pca9535_set_reg(&pca9535_t_DD4_MB, PCA9535_REG_OUTPUT_0, PCA9535_PORT_0, &extenders_debug_reg, PCA9535_PORT_0);
+	//pca9535_i2c_write(&pca9535_t_DD4_MB, pca9535_t_DD4_MB.addr, PCA9535_REG_OUTPUT_0, extenders_debug_reg);
+}
+
+uint16_t zero_find(uint32_t * _array, uint16_t _size)
+{
+	for (uint16_t i =  _size; i > 0; i--)
+	{
+		if ((_array [i] > (dc_offset - zero_nearness)) & ((_array [i] < (dc_offset + zero_nearness)))) return i;
+	}
+	return _size;
+}
+
+void sin_gen()
+{
+	double sin_a, sin_ph, sin_i = 0;
+	for (int i = 0; i < AUDIO_BUF_SIZE;)
+	{//0xFFFFFF 0x7FFFFF
+		sin_i = (double) i;
+		sin_ph = ((double)sin_i)/test_f;
+		sin_a = sin(sin_ph);
+		sin_a = sin_a * sin_amp;
+		//test_buffer[i] = (uint32_t) sin_a + 0x7FFFFF;
+		for (uint8_t _a = 0; _a < 8 ; _a++)
+		{
+			if (ch_index == (_a % 8)) test_buffer[i+ _a] = sin_a + dc_offset;
+			else test_buffer[i+ _a] = 0;
+		}
+		i=i+4;
+	}
+	zero_index = zero_find(test_buffer, AUDIO_BUF_SIZE);
+}
+
+void Audio_System_Start(void)
+{
+    uint8_t reg_val = 0;
+    // Читаем Device ID для верификации связи
+    if (HAL_I2C_Mem_Read(&hi2c3, TAS5720_I2C_ADDR, TAS5720_REG_ID, I2C_MEMADD_SIZE_8BIT, &reg_val, 1, 100) != HAL_OK)
+    {
+        return 0;
+    }
+    TAS5720_WriteReg(TAS5720_REG_POWER_CTRL, 0b11111100);
+    HAL_Delay(10); // Пауза для внутренней загрузки логики чипа
+
+    // 2. Запускаем SAI1-A в циклическом режиме DMA.
+    // Теперь на пинах MCLK, SCK и FS непрерывно присутствуют идеальные частоты:
+    // MCLK = 12.288 МГц, SCK = 3.072 МГц, FS = 48 кГц.
+    HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)silence_buffer, 64);
+    HAL_Delay(15); // Даем время усилителю синхронизировать свой внутренний ШИМ-генератор
+    HAL_SAI_DMAStop(&hsai_BlockA1);
+    HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)test_buffer, AUDIO_BUF_SIZE);
+    //HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)tdm_buffer, TOTAL_SAMPLES);
+    // 3. Конфигурируем усилитель по I2C
+    if (TAS5720_Init() == 1)
+    {
+        // Успех! Система готова воспроизводить звук.
+        // Теперь вместо silence_buffer вы можете запустить рабочий DMA-буфер со звуком:
+    	HAL_I2C_Mem_Read(&hi2c3, TAS5720_I2C_ADDR, 0x08, I2C_MEMADD_SIZE_8BIT, &debug_status, 1, 100);
+    }
+    else
+    {
+        // Ошибка! Проверьте физическое подключение шины I2C и подтягивающие резисторы.
+        Error_Handler();
+    }
+}
+
 
 extern uint32_t dd5_change_tick, dd6_change_tick;
 
@@ -215,10 +336,10 @@ void HAL_DACEx_ErrorCallbackCh2(DAC_HandleTypeDef *hdac)
 {
 }
 
-void USB_CDC_RxCallback(uint8_t* buf, uint32_t len)
+/*void USB_CDC_RxCallback(uint8_t* buf, uint32_t len)
 {
     Terminal_USB_CDC_Callback(buf, len);
-}
+}*/
 
 void on_timer_25_msec(void)
 {
@@ -226,7 +347,7 @@ void on_timer_25_msec(void)
     ctrl_task();
     password_task();
 
-    if(mux_is_active_line())
+    /*if(mux_is_active_line())
     {
         if(HAL_GPIO_ReadPin(VIZ_GPIO_Port, VIZ_Pin))
             HAL_GPIO_WritePin(mute_OP_GPIO_Port, mute_OP_Pin, GPIO_PIN_RESET);
@@ -234,13 +355,13 @@ void on_timer_25_msec(void)
             HAL_GPIO_WritePin(mute_OP_GPIO_Port, mute_OP_Pin, GPIO_PIN_SET);
     }
     else
-        HAL_GPIO_WritePin(mute_OP_GPIO_Port, mute_OP_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(mute_OP_GPIO_Port, mute_OP_Pin, GPIO_PIN_RESET);*/
 }
 
 void on_timer_50_msec(void)
 {
     buzzer_task();
-    Terminal_Process();
+    //Terminal_Process();
     // memplay_task();
 }
 
@@ -251,7 +372,8 @@ void on_timer_250_msec(void)
 
 void on_timer_1_sec(void)
 {
-    HAL_IWDG_Refresh(&hiwdg);
+	//TODO
+    //HAL_IWDG_Refresh(&hiwdg);
 
     if (fulog_buf[0] != '\0')
     {
@@ -290,8 +412,8 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
-  if(magic_boot == 0xB00D0473)
-    JumpToBootloader();
+  //if(magic_boot == 0xB00D0473)
+  //  JumpToBootloader();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -314,7 +436,9 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_USART3_UART_Init();
+  MX_USB_Device_Init();
   MX_ADC1_Init();
+  MX_ADC3_Init();
   MX_ADC2_Init();
   MX_ADC5_Init();
   MX_DAC1_Init();
@@ -326,11 +450,11 @@ int main(void)
   MX_ADC4_Init();
   MX_SPI1_Init();
   MX_TIM15_Init();
-  MX_IWDG_Init();
-  MX_USB_PCD_Init();
+  MX_SAI1_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
-  MX_USB_DEVICE_Init();
+  //MX_USB_DEVICE_Init();
 
   HAL_DAC_MspInit(&hdac1); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
   HAL_DAC_MspInit(&hdac2); //!!!!! ВАЖНО НЕ БУДЕТ РАБОТАТЬ DAC DMA БЕЗ ЭТОЙ СТРОЧК�?
@@ -341,7 +465,7 @@ int main(void)
   set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
  // HAL_TIM_Base_Start(&htim15);
 
-  HAL_Delay(1000);
+  HAL_Delay(100);
 
   ulog(CRLF"Start Trombon BS-16"CRLF);
   //ulog_fmt("Version: %s"CRLF, VERSION);
@@ -420,7 +544,7 @@ int main(void)
   password_init(0x0123);
   #warning hardcoded pass
   akb_init();
-  ctrl_init();
+  //ctrl_init();
 
   static timer_t timer_25_msec;
   startTimer(&timer_25_msec);
@@ -443,28 +567,47 @@ int main(void)
   // memplay(start_sound, sizeof(start_sound), &spk_dacplay_data, setting.spk_volume, &htim15);
 
   // set_tim_frequency2_and_start(&htim15, 16000, BASE_FREQUENCY);
-  // HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)start_sound, sizeof(start_sound)*2, DAC_ALIGN_12B_R);
-  // HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, (uint32_t*)sin_const_100_2047, sizeof(sin_const_100_2047)*2, DAC_ALIGN_12B_R);
 
-  buzzer_init(&hdac1, DAC_CHANNEL_2, &htim15);
+  /*buzzer_init(&hdac1, DAC_CHANNEL_2, &htim15);
   buzzer_make_sound(250, 440, 0x10);
   buzzer_add_queue (250, 494, 0x10);
-  buzzer_add_queue (250, 554, 0x10);
-
+  buzzer_add_queue (250, 554, 0x10);*/
   ulog("BS-16 goto loop"CRLF);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  
-  akb_task();
 
+  akb_task();
+  //i2c_scan();
+  HAL_Delay(100);
+  sin_gen();
+  Audio_System_Start();
+  if (disable_sound) {
+	  HAL_SAI_DMAStop(&hsai_BlockA1);
+	  TAS5720_WriteReg(TAS5720_REG_POWER_CTRL, 0xFC);
+  }
+  local_mic_start();
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    if(isTimerExpired(&timer_1_min,  60000))
+	//HAL_I2C_Init(&hi2c4);
+	//HAL_I2C_Mem_Read(&hi2c4, 0x6c, )
+	//HAL_I2C_(&hi2c4);
+	  //int pca9535_set_reg(pca9535_t * pca9535, pca9535_reg_type_t reg_type, pca9535_port_t port, unsigned char *value, int len) {
+	  /*pca9535_set_reg(&pca9535_t_0, PCA9535_REG_TYPE_OUTPUT , PCA9535_PORT_BOTH , testreg, 2);
+	  HAL_Delay(500);
+	  pca9535_set_reg(&pca9535_t_0, PCA9535_REG_TYPE_OUTPUT , PCA9535_PORT_BOTH , testreg2, 2);*/
+	  //HAL_Delay(100);
+	  /*_err_sai = HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)testsound, 32);
+	  if(_err_sai != HAL_OK )
+	  {
+	    Error_Handler();
+	  }*/
+	  //test_i2c_tas5720();
+    /*if(isTimerExpired(&timer_1_min,  60000))
       on_timer_1_min();
 
     if(isTimerExpired(&timer_1_sec,   1000))
@@ -477,7 +620,37 @@ int main(void)
       on_timer_50_msec();
 
     if(isTimerExpired(&timer_25_msec,   25))
-      on_timer_25_msec();
+      on_timer_25_msec();*/
+	  //HAL_DAC_Start();
+
+	if (HAL_I2C_Mem_Read(&hi2c3, TAS5720_I2C_ADDR, 0x08, I2C_MEMADD_SIZE_8BIT, &debug_status, 1, 100) != HAL_OK)
+	{
+		HAL_Delay(100);
+	}
+	if (debug_status != 0x00 && !disable_sound)
+	{
+
+		TAS5720_WriteReg(TAS5720_REG_POWER_CTRL, 0xFC);
+		if (debug_status == 0x02){
+		}
+		HAL_Delay(100); // Даем время усилителю синхронизировать свой внутренний ШИМ-генератор
+		HAL_SAI_DMAStop(&hsai_BlockA1);
+		HAL_Delay(100);
+		HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)test_buffer, zero_index);//AUDIO_BUF_SIZE);
+		//HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)silence_buffer, 64);
+		HAL_Delay(100);
+		TAS5720_WriteReg(TAS5720_REG_POWER_CTRL, 0xFD);
+	}
+	if (refill_arr)
+	{
+		sin_gen();
+		//refill_arr = 0;
+	}
+	set_dd4(test_output);
+	set_mux_line(8);
+	HAL_Delay(100);
+	bat_con();
+	akb_task();
   }
   /* USER CODE END 3 */
 }
@@ -493,7 +666,7 @@ void SystemClock_Config(void)
 
   /** Configure the main internal regulator output voltage
   */
-  HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1);
+  HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1_BOOST);
 
   /** Configure LSE Drive Capability
   */
@@ -503,17 +676,17 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSE
                               |RCC_OSCILLATORTYPE_LSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
-  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
+  RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
-  RCC_OscInitStruct.PLL.PLLN = 18;
+  RCC_OscInitStruct.PLL.PLLN = 27;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV6;
+  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
@@ -533,6 +706,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  HAL_RCC_MCOConfig(RCC_MCO1, RCC_MCO1SOURCE_HSE, RCC_MCODIV_1);
 }
 
 /* USER CODE BEGIN 4 */

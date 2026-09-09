@@ -33,10 +33,21 @@
 #define TAS5720_REG_FAULT_STATUS  0x08
 #define TAS5720_I2C_ADDR        (0x6C << 1) // 7-bit 0x6C превращаем в 8-bit 0xD8
 
+#define TOTAL_SAMPLES 2048
+#define TDM_CHANNELS  8 // Например, стандартный TDM-8 frame
+#define AUDIO_BUF_SIZE 4096
+
 extern uint8_t i2c_buffer_index[9]; //массив адресов
 extern uint8_t dbg_0, dbg_1;
 extern uint8_t i2c_found_dev[16];
 extern uint8_t i2c_found_dev_2[16];
+
+extern uint32_t sai_buffer[TOTAL_SAMPLES * TDM_CHANNELS];
+extern uint8_t tas_i2c_debug_status;
+extern uint8_t refill_arr;
+extern uint8_t tdm_active_ch;
+extern uint8_t disable_sound;
+
 typedef struct _tas5720 
 {
 	I2C_HandleTypeDef* hi2c ;
@@ -84,3 +95,5 @@ void tas5720_init_2();
 void tas5720_init_3();
 HAL_StatusTypeDef TAS5720_WriteReg(uint8_t reg, uint8_t value);
 uint8_t TAS5720_Init(void);
+uint8_t Audio_System_Start(void);
+void sin_gen();

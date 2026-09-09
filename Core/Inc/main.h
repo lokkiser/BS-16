@@ -35,6 +35,7 @@ extern "C" {
 
 #include "def_util.h"
 #include "soft_timer.h"
+#include "tim.h"
 
 #define BASE_FREQUENCY 				 144000000
 #define BASE_TIM_FREQUENCY 			 BASE_FREQUENCY

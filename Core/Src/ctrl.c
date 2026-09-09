@@ -64,7 +64,6 @@ float get_ext_spk_i(void)
 void set_ext_spk_offset(float volt)
 {
     uint32_t value = 4095.0f * volt / 3.3f;
-
     HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, value);
 }
 
@@ -75,7 +74,6 @@ void ctrl_FullCpltCallback(ADC_HandleTypeDef* hadc)
         ctrl_adc_mic_old[ctrl_index]  = ctrl_adc_mic_last[ctrl_index];
         ctrl_adc_mic_last[ctrl_index] = ctrl_adc_mic_idle[ctrl_index];
         ctrl_adc_mic_idle[ctrl_index] = ctrl_adc1_dma[0];
-
         ctrl_adc_mic_signal[ctrl_index] = ctrl_adc1_dma[1];
     }
     else if (hadc == &hadc2) 
@@ -92,7 +90,6 @@ static Obj_line_t* get_line_obj_ptr(uint8_t num)
 static void set_line_p_state(uint8_t num, p_line_state_e state)
 {
     Obj_line_t* line = get_line_obj_ptr(num);
-
     line->p_state = state;
     set_on_p(num, state);
 }
@@ -100,7 +97,6 @@ static void set_line_p_state(uint8_t num, p_line_state_e state)
 static void ctrl_button_press(uint8_t num)
 {
     ulog_fmt("ctrl: VP button press %d"CRLF, num);
-
 	if(get_on_p(num) != P_ON)
     {
         set_line_event(num, EVENT_PANEL_CALL);

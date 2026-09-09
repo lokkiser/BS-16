@@ -50,16 +50,19 @@
 #include "logfile_util.h"
 #include "str_util.h"
 #include "mp3play_util.h"
-#include "memplay_util.h"
+//#include "memplay_util.h"
 #include "dacplay_util.h"
 #include "mp3files.h"
 #include "password.h"
 #include "buzzer.h"
 #include "usb_device.h"
 #include "TAS5720.h"
-#include "math.h"
+
 //#include "usb_terminal.h"
 #include "default_bootloader_jump.h"
+#include "mcp.h"
+#include "remote_mic.h"
+#include "local_mic.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,9 +72,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define TOTAL_SAMPLES 2048
-#define TDM_CHANNELS  8 // Например, стандартный TDM-8 frame
-#define AUDIO_BUF_SIZE 4096
+
+//#define TOTAL_SAMPLES 16384
 
 /* USER CODE END PD */
 
@@ -93,29 +95,20 @@ uint16_t testval = 1;
 uint16_t _err_sai = 0;
 uint8_t await_debug = 1;
 // Итоговый размер буфера: 2048 фреймов * 8 каналов = 16384 элементов
-uint32_t test_buffer[TOTAL_SAMPLES * TDM_CHANNELS];
-static uint16_t silence_buffer[64] = {0};
 
-uint8_t debug_status = 0;
-uint8_t refill_arr = 1;
-//uint8_t test_f = 24;
-uint8_t test_f = 2; // писк
-uint8_t ch_index = 0;
-//uint32_t sin_amp = 64;  //1000000 - 11000000
-uint32_t sin_amp = 16000;
-uint32_t dc_offset = 0x7FFFFF;// + 0x400000;  // 0ptimal value ~7V 1100000 - 1400000 1000000 900000
-//uint32_t dc_offset = 900000;// будет развязка по переменке
-uint32_t dc_offset_step = 100;  //шаг повышения напряжения до оптимума
-uint8_t oc_reset = 0;
-uint8_t disable_sound = 1;
-uint16_t zero_index = 0; //для плавного смыкания
-float zero_nearness = 10.0; // что мы считаем нулём.
+uint32_t test_adc_buffer[TOTAL_SAMPLES];
+
+
+
+
 
 uint8_t extenders_debug_reg = 0;
 uint8_t extenders_debug_reg_read[8] = {};
 uint16_t debug_adc[8] = {};
 int8_t extenders_error = 0;
-int8_t test_output = 255;
+uint16_t test_output = 255;//255;
+uint8_t reset_timer = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -146,68 +139,6 @@ void test_pin(uint8_t _state)
 	pca9535_set_reg(&pca9535_t_DD4_MB, PCA9535_REG_TYPE_OUTPUT, PCA9535_PORT_0, &extenders_debug_reg, 1);
 	//pca9535_set_reg(&pca9535_t_DD4_MB, PCA9535_REG_OUTPUT_0, PCA9535_PORT_0, &extenders_debug_reg, PCA9535_PORT_0);
 	//pca9535_i2c_write(&pca9535_t_DD4_MB, pca9535_t_DD4_MB.addr, PCA9535_REG_OUTPUT_0, extenders_debug_reg);
-}
-
-uint16_t zero_find(uint32_t * _array, uint16_t _size)
-{
-	for (uint16_t i =  _size; i > 0; i--)
-	{
-		if ((_array [i] > (dc_offset - zero_nearness)) & ((_array [i] < (dc_offset + zero_nearness)))) return i;
-	}
-	return _size;
-}
-
-void sin_gen()
-{
-	double sin_a, sin_ph, sin_i = 0;
-	for (int i = 0; i < AUDIO_BUF_SIZE;)
-	{//0xFFFFFF 0x7FFFFF
-		sin_i = (double) i;
-		sin_ph = ((double)sin_i)/test_f;
-		sin_a = sin(sin_ph);
-		sin_a = sin_a * sin_amp;
-		//test_buffer[i] = (uint32_t) sin_a + 0x7FFFFF;
-		for (uint8_t _a = 0; _a < 8 ; _a++)
-		{
-			if (ch_index == (_a % 8)) test_buffer[i+ _a] = sin_a + dc_offset;
-			else test_buffer[i+ _a] = 0;
-		}
-		i=i+4;
-	}
-	zero_index = zero_find(test_buffer, AUDIO_BUF_SIZE);
-}
-
-void Audio_System_Start(void)
-{
-    uint8_t reg_val = 0;
-    // Читаем Device ID для верификации связи
-    if (HAL_I2C_Mem_Read(&hi2c3, TAS5720_I2C_ADDR, TAS5720_REG_ID, I2C_MEMADD_SIZE_8BIT, &reg_val, 1, 100) != HAL_OK)
-    {
-        return 0;
-    }
-    TAS5720_WriteReg(TAS5720_REG_POWER_CTRL, 0b11111100);
-    HAL_Delay(10); // Пауза для внутренней загрузки логики чипа
-
-    // 2. Запускаем SAI1-A в циклическом режиме DMA.
-    // Теперь на пинах MCLK, SCK и FS непрерывно присутствуют идеальные частоты:
-    // MCLK = 12.288 МГц, SCK = 3.072 МГц, FS = 48 кГц.
-    HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)silence_buffer, 64);
-    HAL_Delay(15); // Даем время усилителю синхронизировать свой внутренний ШИМ-генератор
-    HAL_SAI_DMAStop(&hsai_BlockA1);
-    HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)test_buffer, AUDIO_BUF_SIZE);
-    //HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)tdm_buffer, TOTAL_SAMPLES);
-    // 3. Конфигурируем усилитель по I2C
-    if (TAS5720_Init() == 1)
-    {
-        // Успех! Система готова воспроизводить звук.
-        // Теперь вместо silence_buffer вы можете запустить рабочий DMA-буфер со звуком:
-    	HAL_I2C_Mem_Read(&hi2c3, TAS5720_I2C_ADDR, 0x08, I2C_MEMADD_SIZE_8BIT, &debug_status, 1, 100);
-    }
-    else
-    {
-        // Ошибка! Проверьте физическое подключение шины I2C и подтягивающие резисторы.
-        Error_Handler();
-    }
 }
 
 
@@ -270,11 +201,11 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 {
-    if (hadc == LOCAL_MIC_ADC_HANDLE)
+    /*if (hadc == REMOTE_MIC_ADC_HANDLE)
     {
         local_mic_adc_HalfCpltCallback();
     }
-    else if(hadc == LOCAL_SPK_ADC_HANDLE)
+    else */if(hadc == LOCAL_SPK_ADC_HANDLE)
     {
         local_spk_adc_HalfCpltCallback();
     }
@@ -282,14 +213,24 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
-    if (hadc == LOCAL_MIC_ADC_HANDLE)
+    if(hadc == LOCAL_MIC_ADC_HANDLE)  //тангента
     {
-        local_mic_adc_FullCpltCallback();
+    	uint32_t adc_val;
+    	adc_val = HAL_ADC_GetValue(LOCAL_MIC_ADC_HANDLE);
+    	sai_buffer[mic_adc.index] = adc_val << 8;//12bit ->24bit
+    	if(mic_adc.index < TOTAL_SAMPLES * TDM_CHANNELS)
+    	{
+    		mic_adc.index = mic_adc.index + tdm_active_ch + TDM_CHANNELS; //кладём звук в канал выбранного ЦАПА
+    	}
+    	else
+    	{
+    		mic_adc.index = 0;
+    	}
     }
-    else if(hadc == LOCAL_SPK_ADC_HANDLE)
-    {
-        local_spk_adc_FullCpltCallback();
-    }
+    else if (hadc == REMOTE_MIC_ADC_HANDLE)  //внешний микрофон, панель
+        {
+            remote_mic_adc_FullCpltCallback();
+        }
     else
     {
         ctrl_FullCpltCallback(hadc);
@@ -308,7 +249,7 @@ void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef *hdac)
 {
     if (hdac == LOCAL_MIC_DAC_HANDLE)
     {
-        local_mic_dac_FullCpltCallback();
+        remote_mic_dac_FullCpltCallback();
     }
 }
 
@@ -334,6 +275,16 @@ void HAL_DAC_ErrorCallbackCh1(DAC_HandleTypeDef *hdac)
 
 void HAL_DACEx_ErrorCallbackCh2(DAC_HandleTypeDef *hdac)
 {
+}
+
+// Half-transfer callback (First half is ready to read)
+void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai) {
+    //process_audio_data(&sai_buffer[0], BUFFER_SIZE / 2);
+}
+
+// Transfer-complete callback (Second half is ready to read)
+void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai) {
+    //process_audio_data(&sai_buffer[BUFFER_SIZE / 2], BUFFER_SIZE / 2);
 }
 
 /*void USB_CDC_RxCallback(uint8_t* buf, uint32_t len)
@@ -452,6 +403,7 @@ int main(void)
   MX_TIM15_Init();
   MX_SAI1_Init();
   MX_TIM4_Init();
+  MX_TIM20_Init();
   /* USER CODE BEGIN 2 */
 
   //MX_USB_DEVICE_Init();
@@ -461,9 +413,9 @@ int main(void)
 
   HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
   HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
+  HAL_ADCEx_Calibration_Start(&hadc4, ADC_SINGLE_ENDED);
+  HAL_ADCEx_Calibration_Start(&hadc5, ADC_SINGLE_ENDED);
 
-  set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
- // HAL_TIM_Base_Start(&htim15);
 
   HAL_Delay(100);
 
@@ -473,7 +425,7 @@ int main(void)
 
   mki_init();
   mux_init();
-  console_init();
+  //console_init();
 
   fatfs_mount = false;
 
@@ -566,7 +518,7 @@ int main(void)
   // memplay_init(sound_buf, sizeof(sound_buf));
   // memplay(start_sound, sizeof(start_sound), &spk_dacplay_data, setting.spk_volume, &htim15);
 
-  // set_tim_frequency2_and_start(&htim15, 16000, BASE_FREQUENCY);
+  //
 
   /*buzzer_init(&hdac1, DAC_CHANNEL_2, &htim15);
   buzzer_make_sound(250, 440, 0x10);
@@ -582,12 +534,19 @@ int main(void)
   //i2c_scan();
   HAL_Delay(100);
   sin_gen();
-  Audio_System_Start();
   if (disable_sound) {
 	  HAL_SAI_DMAStop(&hsai_BlockA1);
 	  TAS5720_WriteReg(TAS5720_REG_POWER_CTRL, 0xFC);
   }
-  local_mic_start();
+
+  //HAL_ADC_Start(LOCAL_MIC_ADC_HANDLE);
+
+  HAL_TIM_Base_Start(&htim4);
+  //HAL_TIM_Base_Start(LOCAL_MIC_ADC_TIM_HANDLE);
+  //HAL_TIM_Base_Start(REMOTE_MIC_ADC_TIM_HANDLE);
+
+  mcp_init();
+  local_start();
   while (1)
   {
     /* USER CODE END WHILE */
@@ -623,20 +582,16 @@ int main(void)
       on_timer_25_msec();*/
 	  //HAL_DAC_Start();
 
-	if (HAL_I2C_Mem_Read(&hi2c3, TAS5720_I2C_ADDR, 0x08, I2C_MEMADD_SIZE_8BIT, &debug_status, 1, 100) != HAL_OK)
-	{
-		HAL_Delay(100);
-	}
-	if (debug_status != 0x00 && !disable_sound)
+	if (tas_i2c_debug_status != 0x00 && !disable_sound)
 	{
 
 		TAS5720_WriteReg(TAS5720_REG_POWER_CTRL, 0xFC);
-		if (debug_status == 0x02){
+		if (tas_i2c_debug_status == 0x02){
 		}
 		HAL_Delay(100); // Даем время усилителю синхронизировать свой внутренний ШИМ-генератор
 		HAL_SAI_DMAStop(&hsai_BlockA1);
 		HAL_Delay(100);
-		HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)test_buffer, zero_index);//AUDIO_BUF_SIZE);
+		HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)sai_buffer, TOTAL_SAMPLES * TDM_CHANNELS);//AUDIO_BUF_SIZE);
 		//HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)silence_buffer, 64);
 		HAL_Delay(100);
 		TAS5720_WriteReg(TAS5720_REG_POWER_CTRL, 0xFD);
@@ -645,6 +600,13 @@ int main(void)
 	{
 		sin_gen();
 		//refill_arr = 0;
+	}
+	if (reset_timer)
+	{
+		reset_timer = 0;
+		HAL_TIM_Base_Stop(REMOTE_MIC_ADC_TIM_HANDLE);
+		//set_tim_frequency2(&htim15, d_BASE_AUDIO_FREQUENCY, d_BASE_FREQUENCY);
+		HAL_TIM_Base_Start(REMOTE_MIC_ADC_TIM_HANDLE);
 	}
 	set_dd4(test_output);
 	set_mux_line(8);

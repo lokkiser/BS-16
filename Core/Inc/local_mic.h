@@ -12,23 +12,19 @@
 #include "dynbuf_util.h"
 
 #define LOCAL_MIC_ADC_HANDLE		&hadc4
-#define LOCAL_MIC_ADC_TIM_HANDLE	&htim15
+#define LOCAL_MIC_ADC_TIM_HANDLE	&htim20
 
 
-#define LOCAL_MIC_DAC_HANDLE		&hdac2
-#define LOCAL_MIC_DAC_CHANNEL		DAC_CHANNEL_1
+#define LOCAL_MIC_DAC_HANDLE		&hdac1
+#define LOCAL_MIC_DAC_CHANNEL		DAC_CHANNEL_2
 //#define LOCAL_MIC_DAC_TIM_HANDLE	&htim8
 
 
-void local_mic_adc_HalfCpltCallback(void);
-void local_mic_adc_FullCpltCallback(void);
-bool local_mic_is_started(void);
-void local_mic_stop(void);
-bool local_mic_start(void);
-void local_mic_init(void);
-void local_mic_dac_HalfCpltCallback(void);
-void local_mic_dac_FullCpltCallback(void);
+
+
+
 
 extern dynamic_buf_t local_mic_dynbuf;
 
 #endif /* CORE_INC_LOCAL_MIC_H_ */
+

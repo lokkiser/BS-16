@@ -84,13 +84,13 @@ void console_rcv(char * msg)
         ulog(buf);
         ulog(CRLF);
     }
-    else if (strequals(msg, "MIC ON")) {
+    /*else if (strequals(msg, "MIC ON")) { //TODO
         console_replay_bool( local_mic_start() );
     }
     else if (strequals(msg, "MIC OFF")) {
         local_mic_stop();
         console_replay_bool(true);
-    }
+    }*/
     else if (strequals(msg, "SPK ON")) {
         console_replay_bool( local_spk_start() );
     }

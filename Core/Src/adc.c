@@ -32,8 +32,6 @@ ADC_HandleTypeDef hadc5;
 DMA_HandleTypeDef hdma_adc1;
 DMA_HandleTypeDef hdma_adc2;
 DMA_HandleTypeDef hdma_adc3;
-DMA_HandleTypeDef hdma_adc4;
-DMA_HandleTypeDef hdma_adc5;
 
 /* ADC1 init function */
 void MX_ADC1_Init(void)
@@ -272,9 +270,9 @@ void MX_ADC4_Init(void)
   hadc4.Init.ContinuousConvMode = DISABLE;
   hadc4.Init.NbrOfConversion = 1;
   hadc4.Init.DiscontinuousConvMode = DISABLE;
-  hadc4.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T15_TRGO;
+  hadc4.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T20_TRGO;
   hadc4.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
-  hadc4.Init.DMAContinuousRequests = ENABLE;
+  hadc4.Init.DMAContinuousRequests = DISABLE;
   hadc4.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc4.Init.OversamplingMode = DISABLE;
   if (HAL_ADC_Init(&hadc4) != HAL_OK)
@@ -286,7 +284,7 @@ void MX_ADC4_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_3;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_92CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_12CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -326,10 +324,10 @@ void MX_ADC5_Init(void)
   hadc5.Init.ContinuousConvMode = DISABLE;
   hadc5.Init.NbrOfConversion = 1;
   hadc5.Init.DiscontinuousConvMode = DISABLE;
-  hadc5.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T4_TRGO;
+  hadc5.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T20_TRGO;
   hadc5.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
   hadc5.Init.DMAContinuousRequests = DISABLE;
-  hadc5.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc5.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
   hadc5.Init.OversamplingMode = DISABLE;
   if (HAL_ADC_Init(&hadc5) != HAL_OK)
   {
@@ -340,7 +338,7 @@ void MX_ADC5_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_10;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_92CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_6CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -361,7 +359,6 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 {
 
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-  HAL_DMA_MuxSyncConfigTypeDef pSyncConfig= {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
   if(adcHandle->Instance==ADC1)
   {
@@ -560,24 +557,6 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(MCU_ADC4_3_GPIO_Port, &GPIO_InitStruct);
 
-    /* ADC4 DMA Init */
-    /* ADC4 Init */
-    hdma_adc4.Instance = DMA1_Channel6;
-    hdma_adc4.Init.Request = DMA_REQUEST_ADC4;
-    hdma_adc4.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    hdma_adc4.Init.PeriphInc = DMA_PINC_DISABLE;
-    hdma_adc4.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_adc4.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-    hdma_adc4.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-    hdma_adc4.Init.Mode = DMA_CIRCULAR;
-    hdma_adc4.Init.Priority = DMA_PRIORITY_LOW;
-    if (HAL_DMA_Init(&hdma_adc4) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
-    __HAL_LINKDMA(adcHandle,DMA_Handle,hdma_adc4);
-
     /* ADC4 interrupt Init */
     HAL_NVIC_SetPriority(ADC4_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(ADC4_IRQn);
@@ -615,34 +594,9 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-    /* ADC5 DMA Init */
-    /* ADC5 Init */
-    hdma_adc5.Instance = DMA1_Channel2;
-    hdma_adc5.Init.Request = DMA_REQUEST_ADC5;
-    hdma_adc5.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    hdma_adc5.Init.PeriphInc = DMA_PINC_DISABLE;
-    hdma_adc5.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_adc5.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-    hdma_adc5.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-    hdma_adc5.Init.Mode = DMA_CIRCULAR;
-    hdma_adc5.Init.Priority = DMA_PRIORITY_MEDIUM;
-    if (HAL_DMA_Init(&hdma_adc5) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
-    pSyncConfig.SyncSignalID = HAL_DMAMUX1_SYNC_EXTI0;
-    pSyncConfig.SyncPolarity = HAL_DMAMUX_SYNC_NO_EVENT;
-    pSyncConfig.SyncEnable = DISABLE;
-    pSyncConfig.EventEnable = ENABLE;
-    pSyncConfig.RequestNumber = 1;
-    if (HAL_DMAEx_ConfigMuxSync(&hdma_adc5, &pSyncConfig) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
-    __HAL_LINKDMA(adcHandle,DMA_Handle,hdma_adc5);
-
+    /* ADC5 interrupt Init */
+    HAL_NVIC_SetPriority(ADC5_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(ADC5_IRQn);
   /* USER CODE BEGIN ADC5_MspInit 1 */
 
   /* USER CODE END ADC5_MspInit 1 */
@@ -759,9 +713,6 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     */
     HAL_GPIO_DeInit(MCU_ADC4_3_GPIO_Port, MCU_ADC4_3_Pin);
 
-    /* ADC4 DMA DeInit */
-    HAL_DMA_DeInit(adcHandle->DMA_Handle);
-
     /* ADC4 interrupt Deinit */
     HAL_NVIC_DisableIRQ(ADC4_IRQn);
   /* USER CODE BEGIN ADC4_MspDeInit 1 */
@@ -784,8 +735,8 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     */
     HAL_GPIO_DeInit(GPIOD, GPIO_PIN_13);
 
-    /* ADC5 DMA DeInit */
-    HAL_DMA_DeInit(adcHandle->DMA_Handle);
+    /* ADC5 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(ADC5_IRQn);
   /* USER CODE BEGIN ADC5_MspDeInit 1 */
 
   /* USER CODE END ADC5_MspDeInit 1 */

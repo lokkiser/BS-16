@@ -1,5 +1,6 @@
 #include "TAS5720.h"
-
+#include "sai.h"
+#include "math.h"
 uint8_t test_buf[16] = {};
 uint8_t test_buf_2[16] = {};
 uint8_t i2c_buffer_index[9] = {0, 1, 2, 3, 4, 6, 8, 16, 17};
@@ -8,6 +9,24 @@ uint8_t i2c_found_dev_2[16] = {};
 uint8_t i2c_found_index = 0;
 uint8_t i2c_found_index_2 = 0;
 uint8_t dbg_0, dbg_1 = 0;
+static uint16_t silence_buffer[64] = {0};
+uint32_t sai_buffer[TOTAL_SAMPLES * TDM_CHANNELS];
+uint8_t tas_i2c_debug_status = 0;
+
+uint8_t refill_arr = 0;
+//uint8_t test_f = 24;
+uint8_t test_f = 2; // писк
+uint8_t ch_index = 0;
+uint8_t tdm_active_ch = 0; //номер канала, куда вещаем с микрофона
+//uint32_t sin_amp = 64;  //1000000 - 11000000
+uint32_t sin_amp = 16000;
+uint32_t dc_offset = 0x7FFFFF;// + 0x400000;  // 0ptimal value ~7V 1100000 - 1400000 1000000 900000
+
+uint32_t dc_offset_step = 100;  //шаг повышения напряжения до оптимума
+uint8_t oc_reset = 0;
+uint8_t disable_sound = 0;
+uint16_t zero_index = 0; //для плавного смыкания
+float zero_nearness = 10.0; // что мы считаем нулём.
 
 tas5720_t tas5720_t_0, tas5720_t_1, tas5720_t_2, tas5720_t_3, tas5720_t_4, tas5720_t_5, tas5720_t_6, tas5720_t_7,
 tas5720_t_8, tas5720_t_9, tas5720_t_10, tas5720_t_11, tas5720_t_12, tas5720_t_13, tas5720_t_14, tas5720_t_15 = {
@@ -64,6 +83,14 @@ tas5720_t tas5720_t_7;*/
   * @param  tdm_slot: номер целевого TDM слота (от 0 до 7)
   * @retval HAL_StatusTypeDef
   */
+uint16_t zero_find(uint32_t * _array, uint16_t _size)
+{
+	for (uint16_t i =  _size; i > 0; i--)
+	{
+		if ((_array [i] > (dc_offset - zero_nearness)) & ((_array [i] < (dc_offset + zero_nearness)))) return i;
+	}
+	return _size;
+}
 
 HAL_StatusTypeDef TAS5720_WriteReg(uint8_t reg, uint8_t value)
 {
@@ -80,7 +107,7 @@ uint8_t TAS5720_Init(void)
     // РЕГИСТР 0x03: Выбор формата аудио
     // Значение 0x00 устанавливает формат I2S, 24-bit (полное соответствие вашему SAI1-A)
     // Обязательно настраиваем ДО снятия Shutdown, чтобы избежать щелчков.
-    TAS5720_WriteReg(TAS5720_REG_DIGITAL_CTRL1, 0b10000000);
+    TAS5720_WriteReg(TAS5720_REG_DIGITAL_CTRL1, 0b00000000);
     // РЕГИСТР 0x04: Цифровая громкость
     // 0xCF — уровень 0 дБ (номинал без усиления и ослабления)
     TAS5720_WriteReg(TAS5720_REG_VOLUME_CTRL1, 0xCF);
@@ -307,3 +334,57 @@ void tas5720_form(tas5720_t * tas5720_ex)
 	tas5720_ex->i2c_buffer[8] = (uint8_t) ((tas5720_ex->digclip_full & 0b111111 << 5) + (tas5720_ex->tdm_slot_select & 0b111)); //17
 }
 
+uint8_t Audio_System_Start(void)
+{
+    uint8_t reg_val = 0;
+    // Читаем Device ID для верификации связи
+    if (HAL_I2C_Mem_Read(&hi2c3, TAS5720_I2C_ADDR, TAS5720_REG_ID, I2C_MEMADD_SIZE_8BIT, &reg_val, 1, 100) != HAL_OK)
+    {
+        return 0;
+    }
+    TAS5720_WriteReg(TAS5720_REG_POWER_CTRL, 0b11111100);
+    HAL_Delay(10); // Пауза для внутренней загрузки логики чипа
+
+
+    // 2. Запускаем SAI1-A в циклическом режиме DMA.
+    // Теперь на пинах MCLK, SCK и FS непрерывно присутствуют идеальные частоты:
+    // MCLK = 12.288 МГц, SCK = 3.072 МГц, FS = 48 кГц.
+    HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)silence_buffer, 64);
+    HAL_Delay(15); // Даем время усилителю синхронизировать свой внутренний ШИМ-генератор
+    HAL_SAI_DMAStop(&hsai_BlockA1);
+    HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)sai_buffer, TOTAL_SAMPLES * TDM_CHANNELS);
+    //HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)tdm_buffer, TOTAL_SAMPLES);
+    // 3. Конфигурируем усилитель по I2C
+    if (TAS5720_Init() == 1)
+    {
+        // Успех! Система готова воспроизводить звук.
+        // Теперь вместо silence_buffer вы можете запустить рабочий DMA-буфер со звуком:
+    	HAL_I2C_Mem_Read(&hi2c3, TAS5720_I2C_ADDR, 0x08, I2C_MEMADD_SIZE_8BIT, &tas_i2c_debug_status, 1, 100);
+    }
+    else
+    {
+        // Ошибка! Проверьте физическое подключение шины I2C и подтягивающие резисторы.
+        Error_Handler();
+    }
+    return 0;
+}
+
+void sin_gen()
+{
+	double sin_a, sin_ph, sin_i = 0;
+	for (int i = 0; i < AUDIO_BUF_SIZE;)
+	{//0xFFFFFF 0x7FFFFF
+		sin_i = (double) i;
+		sin_ph = ((double)sin_i)/test_f;
+		sin_a = sin(sin_ph);
+		sin_a = sin_a * sin_amp;
+		//test_buffer[i] = (uint32_t) sin_a + 0x7FFFFF;
+		for (uint8_t _a = 0; _a < 8 ; _a++)
+		{
+			if (ch_index == (_a % 8)) sai_buffer[i+ _a] = sin_a + dc_offset;
+			else sai_buffer[i+ _a] = 0;
+		}
+		i=i+4;
+	}
+	zero_index = zero_find(sai_buffer, AUDIO_BUF_SIZE);
+}

@@ -10,51 +10,13 @@
 #include "local_mic.h"
 #include <string.h>
 #include "stm_util.h"
+#include "TAS5720.h"
 
 static bool local_mic_is_start = false;
-static uint16_t local_mic_dma_adc_buf[2][SOUND_DMA_BUFFER_SIZE];
-static uint16_t local_mic_dma_dac_buf[2][SOUND_DMA_BUFFER_SIZE];
-static uint8_t  local_mic_dma_dac_index = 0xFF;
 
 
-
-void local_mic_dac_HalfCpltCallback(void)
-{
-	local_mic_dma_dac_index = 0;
-
-	//fulog("d0"CRLF);
-}
-
-void local_mic_dac_FullCpltCallback(void)
-{
-	local_mic_dma_dac_index = 1;
-
-	//fulog("d1"CRLF);
-}
-
-void local_mic_adc_HalfCpltCallback(void)
-{
-
-	if (local_mic_dma_dac_index < 2) 
-	{
-		memcpy(local_mic_dma_dac_buf[local_mic_dma_dac_index], local_mic_dma_adc_buf[0], SOUND_DMA_BUFFER_SIZE * 2);
-		//fulog_fmt("a0->d%d"CRLF, local_mic_dma_dac_index);
-		local_mic_dma_dac_index = 0xFF;
-	}
-	//fulog("a0"CRLF);
-}
-
-void local_mic_adc_FullCpltCallback(void)
-{
-	if (local_mic_dma_dac_index < 2) 
-	{
-		memcpy(local_mic_dma_dac_buf[local_mic_dma_dac_index], local_mic_dma_adc_buf[1], SOUND_DMA_BUFFER_SIZE * 2);
-		//fulog_fmt("a1->d%d"CRLF, local_mic_dma_dac_index);
-		local_mic_dma_dac_index = 0xFF;
-	}
-
-	//fulog("a1"CRLF);
-}
+uint32_t d_BASE_AUDIO_FREQUENCY = 48000;
+uint32_t d_BASE_FREQUENCY = 165888000;
 
 bool local_mic_is_started(void)
 {
@@ -71,7 +33,9 @@ void local_mic_stop(void)
 	ulog("local_mic: stop dma"CRLF);
 }
 
-bool local_mic_start(void)
+
+
+bool local_start(void)
 {
 	HAL_StatusTypeDef status;
 
@@ -79,10 +43,11 @@ bool local_mic_start(void)
 	{
 		local_mic_stop();
 	}
-
+	set_tim_frequency2_and_start(LOCAL_MIC_ADC_TIM_HANDLE, d_BASE_AUDIO_FREQUENCY, d_BASE_FREQUENCY);
 	// set_tim_frequency2(LOCAL_MIC_ADC_TIM_HANDLE, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
 	HAL_TIM_Base_Start(LOCAL_MIC_ADC_TIM_HANDLE);
-	status = HAL_ADC_Start_DMA(LOCAL_MIC_ADC_HANDLE, (uint32_t*)local_mic_dma_adc_buf, SOUND_DMA_BUFFER_SIZE * 2);
+	//HAL_ADC_Start_DMA(LOCAL_MIC_ADC_HANDLE, (uint32_t*)local_mic_dma_adc_buf, SOUND_DMA_BUFFER_SIZE * 2)
+	status = HAL_ADC_Start_IT(LOCAL_MIC_ADC_HANDLE);
 	if (status != HAL_OK) 
 	{
 		local_mic_stop();
@@ -92,7 +57,7 @@ bool local_mic_start(void)
 
 	// set_tim_frequency2(LOCAL_MIC_DAC_TIM_HANDLE, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
 	// HAL_TIM_Base_Start(LOCAL_MIC_DAC_TIM_HANDLE);
-	status = HAL_DAC_Start_DMA(LOCAL_MIC_DAC_HANDLE, LOCAL_MIC_DAC_CHANNEL, (uint32_t*)local_mic_dma_dac_buf, SOUND_DMA_BUFFER_SIZE * 2, DAC_ALIGN_12B_R);
+	status = Audio_System_Start();
 	if (status != HAL_OK) 
 	{
 		local_mic_stop();

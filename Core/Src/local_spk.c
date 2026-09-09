@@ -55,9 +55,11 @@ void local_spk_adc_HalfCpltCallback(void)
 	//fulog("a0"CRLF);
 }
 
-void local_spk_adc_FullCpltCallback(void)
+void local_spk_adc_FullCpltCallback(void) //тангента
 {
-	adcplay_FullCpltCallback(&spk_adcplay_data);
+
+	//должен писать в буфер
+	//adcplay_FullCpltCallback(&spk_adcplay_data);
 	//fulog("a1"CRLF);
 }
 

@@ -546,7 +546,8 @@ int main(void)
   //HAL_TIM_Base_Start(REMOTE_MIC_ADC_TIM_HANDLE);
 
   mcp_init();
-  local_start();
+  local_mic_start();
+  remote_mic_start();
   while (1)
   {
     /* USER CODE END WHILE */

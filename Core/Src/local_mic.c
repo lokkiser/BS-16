@@ -35,7 +35,7 @@ void local_mic_stop(void)
 
 
 
-bool local_start(void)
+bool local_mic_start(void)
 {
 	HAL_StatusTypeDef status;
 

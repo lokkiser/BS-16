@@ -5,6 +5,7 @@
  *      Author: bimpk
  */
 #include "local_mic.h"
+#include "dynbuf_util.h"
 #ifndef INC_REMOTE_MIC_H_
 #define INC_REMOTE_MIC_H_
 
@@ -29,3 +30,4 @@ struct adc_mic_snd
 	uint16_t index;
 };
 extern struct adc_mic_snd mic_adc;
+extern dynamic_buf_t local_mic_dynbuf;

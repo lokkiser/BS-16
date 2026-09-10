@@ -67,9 +67,9 @@ bool remote_mic_is_started(void)
 
 void remote_mic_stop(void)
 {
-	HAL_ADC_Stop_DMA(LOCAL_MIC_ADC_HANDLE);
+	HAL_ADC_Stop_DMA(REMOTE_MIC_ADC_HANDLE);
 	//HAL_TIM_Base_Stop(LOCAL_MIC_ADC_TIM_HANDLE);
-	HAL_DAC_Stop_DMA(LOCAL_MIC_DAC_HANDLE, LOCAL_MIC_DAC_CHANNEL);
+
 	//HAL_TIM_Base_Stop(LOCAL_MIC_DAC_TIM_HANDLE);
 	remote_mic_is_start = false;
 	ulog("remote_mic: stop dma"CRLF);
@@ -79,35 +79,15 @@ void remote_mic_stop(void)
 bool remote_mic_start(void)
 {
 	HAL_StatusTypeDef status;
+	//HAL_ADC_Start_DMA(REMOTE_MIC_ADC_HANDLE, (uint32_t*)remote_mic_dma_adc_buf, SOUND_DMA_BUFFER_SIZE * 2);
 
-	/*if (remote_mic_is_start)
-	{
-		remote_mic_stop();
-	}
-	set_tim_frequency2_and_start(remote_mic_ADC_TIM_HANDLE, d_BASE_AUDIO_FREQUENCY, d_BASE_FREQUENCY);
-	// set_tim_frequency2(remote_mic_ADC_TIM_HANDLE, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);*/
-	//HAL_TIM_Base_Start(remote_mic_ADC_TIM_HANDLE);
-	HAL_ADC_Start_DMA(REMOTE_MIC_ADC_HANDLE, (uint32_t*)remote_mic_dma_adc_buf, SOUND_DMA_BUFFER_SIZE * 2);
-	//HAL_DAC_Start_DMA
-	/*status = HAL_ADC_Start_IT(remote_mic_ADC_HANDLE);
-	if (status != HAL_OK)
-	{
-		remote_mic_stop();
-		ulog_fmt("remote_mic: error invalid start dma ADC status = %d"CRLF, status);
-		return false;
-	}*/
-
-	// set_tim_frequency2(remote_mic_DAC_TIM_HANDLE, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
-	// HAL_TIM_Base_Start(remote_mic_DAC_TIM_HANDLE);
-	//тут через SAI и прерывания
-	status = Audio_System_Start();
+	//status = HAL_DAC_Start_DMA(REMOTE_MIC_DAC_HANDLE, );
 	if (status != HAL_OK)
 	{
 		//remote_mic_stop();
 		//ulog_fmt("remote_mic: error invalid start dma DAC status = %d"CRLF, status);
 		return false;
 	}
-
 	remote_mic_is_start = true;
 	//ulog("remote_mic: start dma"CRLF);
 	return true;

@@ -129,7 +129,7 @@ void MX_TIM20_Init(void)
 
   /* USER CODE END TIM20_Init 1 */
   htim20.Instance = TIM20;
-  htim20.Init.Prescaler = 0;
+  htim20.Init.Prescaler = 35;
   htim20.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim20.Init.Period = 555;
   htim20.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;

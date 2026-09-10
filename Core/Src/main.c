@@ -63,6 +63,8 @@
 #include "mcp.h"
 #include "remote_mic.h"
 #include "local_mic.h"
+#include "remote_spk.h"
+#include "local_spk.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -237,9 +239,9 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
     }
 }
 
-void HAL_DAC_ConvHalfCpltCallbackCh1(DAC_HandleTypeDef *hdac)
+/*void HAL_DAC_ConvHalfCpltCallbackCh1(DAC_HandleTypeDef *hdac)
 {
-    if (hdac == LOCAL_MIC_DAC_HANDLE)
+    if (hdac == REMOTE_MIC_DAC_HANDLE)
     {
         local_mic_dac_HalfCpltCallback();
     }
@@ -247,11 +249,11 @@ void HAL_DAC_ConvHalfCpltCallbackCh1(DAC_HandleTypeDef *hdac)
 
 void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef *hdac)
 {
-    if (hdac == LOCAL_MIC_DAC_HANDLE)
+    if (hdac == REMOTE_MIC_DAC_HANDLE)
     {
         remote_mic_dac_FullCpltCallback();
     }
-}
+}*/
 
 void HAL_DACEx_ConvHalfCpltCallbackCh2(DAC_HandleTypeDef *hdac)
 {
@@ -533,7 +535,7 @@ int main(void)
   akb_task();
   //i2c_scan();
   HAL_Delay(100);
-  sin_gen();
+  sin_gen(sai_buffer, TOTAL_SAMPLES * TDM_CHANNELS);
   if (disable_sound) {
 	  HAL_SAI_DMAStop(&hsai_BlockA1);
 	  TAS5720_WriteReg(TAS5720_REG_POWER_CTRL, 0xFC);
@@ -547,7 +549,8 @@ int main(void)
 
   mcp_init();
   local_mic_start();
-  remote_mic_start();
+  //remote_mic_start();
+  remote_spk_start();
   while (1)
   {
     /* USER CODE END WHILE */
@@ -599,7 +602,7 @@ int main(void)
 	}
 	if (refill_arr)
 	{
-		sin_gen();
+		sin_gen(sai_buffer, TOTAL_SAMPLES * TDM_CHANNELS);
 		//refill_arr = 0;
 	}
 	if (reset_timer)

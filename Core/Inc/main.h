@@ -37,9 +37,9 @@ extern "C" {
 #include "soft_timer.h"
 #include "tim.h"
 
-#define BASE_FREQUENCY 				 144000000
+#define BASE_FREQUENCY 				 165888000
 #define BASE_TIM_FREQUENCY 			 BASE_FREQUENCY
-#define BASE_AUDIO_FREQUENCY 		 16000
+#define BASE_AUDIO_FREQUENCY 		 48000
 #define HAL_ADC_INJECTED_ENABLED	 1
 #define SOUND_DMA_BUFFER_SIZE 		 1024
 #define BC16_LOADER_FILE_NAME 		"bc16_loader.bin"

@@ -12,6 +12,8 @@
 #include "mki.h"
 #include "local_mic.h"
 #include "local_spk.h"
+#include "remote_mic.h"
+#include "remote_spk.h"
 #include "buzzer.h"
 #include "password.h"
 

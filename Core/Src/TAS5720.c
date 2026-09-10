@@ -9,8 +9,7 @@ uint8_t i2c_found_dev_2[16] = {};
 uint8_t i2c_found_index = 0;
 uint8_t i2c_found_index_2 = 0;
 uint8_t dbg_0, dbg_1 = 0;
-static uint16_t silence_buffer[64] = {0};
-uint32_t sai_buffer[TOTAL_SAMPLES * TDM_CHANNELS];
+
 uint8_t tas_i2c_debug_status = 0;
 
 uint8_t refill_arr = 0;
@@ -153,7 +152,7 @@ void test_i2c_tas5720()
 
 
 
-void tas5720_init(tas5720_t * tas5720_ex)
+void tas5720_init()//tas5720_t * tas5720_ex)
 {
 	/*tas5720_ex->address = 0;
 	tas5720_ex->ldrs_data = {};
@@ -334,7 +333,7 @@ void tas5720_form(tas5720_t * tas5720_ex)
 	tas5720_ex->i2c_buffer[8] = (uint8_t) ((tas5720_ex->digclip_full & 0b111111 << 5) + (tas5720_ex->tdm_slot_select & 0b111)); //17
 }
 
-uint8_t Audio_System_Start(void)
+uint8_t Audio_System_Start(SAI_HandleTypeDef _hsai, uint32_t *_sai_buffer, uint16_t * _silence_buffer, uint16_t _len)
 {
     uint8_t reg_val = 0;
     // Читаем Device ID для верификации связи
@@ -349,10 +348,10 @@ uint8_t Audio_System_Start(void)
     // 2. Запускаем SAI1-A в циклическом режиме DMA.
     // Теперь на пинах MCLK, SCK и FS непрерывно присутствуют идеальные частоты:
     // MCLK = 12.288 МГц, SCK = 3.072 МГц, FS = 48 кГц.
-    HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)silence_buffer, 64);
+    HAL_SAI_Transmit_DMA(&_hsai, (uint8_t*)_silence_buffer, 64);
     HAL_Delay(15); // Даем время усилителю синхронизировать свой внутренний ШИМ-генератор
-    HAL_SAI_DMAStop(&hsai_BlockA1);
-    HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)sai_buffer, TOTAL_SAMPLES * TDM_CHANNELS);
+    HAL_SAI_DMAStop(&_hsai);
+    HAL_SAI_Transmit_DMA(&_hsai, (uint8_t*)_sai_buffer, _len);
     //HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)tdm_buffer, TOTAL_SAMPLES);
     // 3. Конфигурируем усилитель по I2C
     if (TAS5720_Init() == 1)
@@ -369,10 +368,22 @@ uint8_t Audio_System_Start(void)
     return 0;
 }
 
-void sin_gen()
+uint8_t Audio_System_Stop(SAI_HandleTypeDef _hsai)
+{
+    uint8_t reg_val = 0;
+    if (HAL_I2C_Mem_Read(&hi2c4, TAS5720_ch0, 0x01, I2C_MEMADD_SIZE_8BIT, &reg_val, 0, HAL_MAX_DELAY) == HAL_OK)
+    {
+    	reg_val |= 0x01;
+        HAL_I2C_Mem_Write(&hi2c4, TAS5720_ch0, 0x01, I2C_MEMADD_SIZE_8BIT, &reg_val, 0, HAL_MAX_DELAY);
+    }
+	HAL_SAI_DMAStop(&_hsai);
+	return 1;
+}
+
+void sin_gen(uint32_t *_buffer, uint16_t buf_size)
 {
 	double sin_a, sin_ph, sin_i = 0;
-	for (int i = 0; i < AUDIO_BUF_SIZE;)
+	for (uint16_t i = 0; i < buf_size;)
 	{//0xFFFFFF 0x7FFFFF
 		sin_i = (double) i;
 		sin_ph = ((double)sin_i)/test_f;
@@ -381,10 +392,10 @@ void sin_gen()
 		//test_buffer[i] = (uint32_t) sin_a + 0x7FFFFF;
 		for (uint8_t _a = 0; _a < 8 ; _a++)
 		{
-			if (ch_index == (_a % 8)) sai_buffer[i+ _a] = sin_a + dc_offset;
-			else sai_buffer[i+ _a] = 0;
+			if (ch_index == (_a % 8)) _buffer[i+ _a] = sin_a + dc_offset;
+			else _buffer[i+ _a] = 0;
 		}
 		i=i+4;
 	}
-	zero_index = zero_find(sai_buffer, AUDIO_BUF_SIZE);
+	zero_index = zero_find(_buffer, buf_size);
 }

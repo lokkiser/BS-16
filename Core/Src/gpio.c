@@ -109,11 +109,17 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(CLK_IRQ_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : INT1_Pin INT2_Pin */
-  GPIO_InitStruct.Pin = INT1_Pin|INT2_Pin;
+  /*Configure GPIO pin : INT1_Pin */
+  GPIO_InitStruct.Pin = INT1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+  HAL_GPIO_Init(INT1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : INT2_Pin */
+  GPIO_InitStruct.Pin = INT2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(INT2_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PC9 */
   GPIO_InitStruct.Pin = GPIO_PIN_9;

@@ -9,7 +9,7 @@
 #include "local_spk.h"
 #include <string.h>
 #include "stm_util.h"
-
+#include "TAS5720.h"
 dacplay_data_t spk_dacplay_data = DACPLAY_STATIC_INIT(11, LOCAL_SPK_DAC_HANDLE, LOCAL_SPK_DAC_CHANNEL);
 adcplay_data_t spk_adcplay_data = ADCPLAY_STATIC_INIT( 3, LOCAL_SPK_ADC_HANDLE);
 
@@ -78,16 +78,14 @@ bool local_spk_start(void)
 {
 	bool res;
 
-	if (local_spk_is_started()) 
-		local_spk_stop();
-
-    res = adcplay_start_dma(&spk_adcplay_data);
+	if (local_spk_is_started());
+    //res =
 	if (res) 
 	{
 		res = dacplay_start_dma(&spk_dacplay_data);
 	}
 
-    set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
+    //set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
     HAL_TIM_Base_Start(&htim15);
 	return res;
 }

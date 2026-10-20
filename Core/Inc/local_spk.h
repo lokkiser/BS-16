@@ -11,6 +11,7 @@
 #include "main.h"
 #include "dacplay_util.h"
 #include "adcplay_util.h"
+#include "remote_mic.h"
 
 #define SOUND_BUF_SIZE		1024 * 4
 

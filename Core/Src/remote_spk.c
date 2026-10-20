@@ -5,11 +5,12 @@
  *      Author: Rafael Boltachev
  */
 
-
+#include "main.h"
 #include "remote_spk.h"
 #include <string.h>
 #include "stm_util.h"
 #include "TAS5720.h"
+
 
 static uint16_t silence_buffer[64] = {0};
 uint32_t sai_buffer[TOTAL_SAMPLES * TDM_CHANNELS];
@@ -73,6 +74,6 @@ bool remote_spk_start(void)
 	*/
     res = Audio_System_Start(remote_SPK_SAI_HANDLE, sai_buffer, silence_buffer, TOTAL_SAMPLES * TDM_CHANNELS);
     //set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
-    //HAL_TIM_Base_Start(&htim15);
+    //
 	return res;
 }

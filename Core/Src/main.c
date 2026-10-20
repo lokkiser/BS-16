@@ -203,11 +203,11 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 {
-    /*if (hadc == REMOTE_MIC_ADC_HANDLE)
+    if (hadc == REMOTE_MIC_ADC_HANDLE)
     {
-        local_mic_adc_HalfCpltCallback();
+        remote_mic_adc_HalfCpltCallback();
     }
-    else */if(hadc == LOCAL_SPK_ADC_HANDLE)
+    else if(hadc == LOCAL_SPK_ADC_HANDLE)
     {
         local_spk_adc_HalfCpltCallback();
     }
@@ -219,14 +219,14 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
     {
     	uint32_t adc_val;
     	adc_val = HAL_ADC_GetValue(LOCAL_MIC_ADC_HANDLE);
-    	sai_buffer[mic_adc.index] = adc_val << 8;//12bit ->24bit
-    	if(mic_adc.index < TOTAL_SAMPLES * TDM_CHANNELS)
+    	sai_buffer[local_mic_adc.index] = adc_val << 8;//12bit ->24bit
+    	if(local_mic_adc.index < TOTAL_SAMPLES * TDM_CHANNELS)
     	{
-    		mic_adc.index = mic_adc.index + tdm_active_ch + TDM_CHANNELS; //кладём звук в канал выбранного ЦАПА
+    		local_mic_adc.index = local_mic_adc.index + tdm_active_ch + TDM_CHANNELS; //кладём звук в канал выбранного ЦАПА
     	}
     	else
     	{
-    		mic_adc.index = 0;
+    		local_mic_adc.index = 0;
     	}
     }
     else if (hadc == REMOTE_MIC_ADC_HANDLE)  //внешний микрофон, панель
@@ -259,7 +259,8 @@ void HAL_DACEx_ConvHalfCpltCallbackCh2(DAC_HandleTypeDef *hdac)
 {
     if (hdac == LOCAL_SPK_DAC_HANDLE)
     {
-        local_spk_dac_HalfCpltCallback();
+    	remote_mic_adc_HalfCpltCallback();
+        //local_spk_dac_HalfCpltCallback();
     }
 }
 
@@ -267,7 +268,8 @@ void HAL_DACEx_ConvCpltCallbackCh2(DAC_HandleTypeDef *hdac)
 {
     if (hdac == LOCAL_SPK_DAC_HANDLE)
     {
-        local_spk_dac_FullCpltCallback();
+    	remote_mic_adc_FullCpltCallback();
+        //local_spk_dac_FullCpltCallback();
     }
 }
 
@@ -546,11 +548,14 @@ int main(void)
   HAL_TIM_Base_Start(&htim4);
   //HAL_TIM_Base_Start(LOCAL_MIC_ADC_TIM_HANDLE);
   //HAL_TIM_Base_Start(REMOTE_MIC_ADC_TIM_HANDLE);
-
+  //buzzer_init(&hdac1, DAC_CHANNEL_2, &htim15);
+  //buzzer_make_sound(250, 440, 0x10);
   mcp_init();
   local_mic_start();
-  //remote_mic_start();
   remote_spk_start();
+  remote_mic_start();
+  //buzzer_init(&hdac1, DAC_CHANNEL_2, &htim15);
+  local_spk_start();
   while (1)
   {
     /* USER CODE END WHILE */

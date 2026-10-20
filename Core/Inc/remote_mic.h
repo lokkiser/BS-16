@@ -6,6 +6,7 @@
  */
 #include "local_mic.h"
 #include "dynbuf_util.h"
+#include "local_spk.h"
 #ifndef INC_REMOTE_MIC_H_
 #define INC_REMOTE_MIC_H_
 
@@ -24,10 +25,10 @@ bool remote_mic_start(void);
 void remote_mic_init(void);
 #endif /* INC_REMOTE_MIC_H_ */
 
-struct adc_mic_snd
-{//буфер микрофона
-	uint16_t snd_buf[200];
-	uint16_t index;
-};
-extern struct adc_mic_snd mic_adc;
+
 extern dynamic_buf_t local_mic_dynbuf;
+
+extern uint16_t remote_mic_dma_adc_buf[2][SOUND_DMA_BUFFER_SIZE];
+extern uint16_t remote_mic_dma_dac_buf[2][SOUND_DMA_BUFFER_SIZE];
+extern uint8_t  remote_mic_dma_dac_index;
+extern bool remote_mic_is_start;

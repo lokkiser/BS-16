@@ -10,6 +10,7 @@
 #include <string.h>
 #include "stm_util.h"
 #include "TAS5720.h"
+//что за волшебные числа? 11? 3?
 dacplay_data_t spk_dacplay_data = DACPLAY_STATIC_INIT(11, LOCAL_SPK_DAC_HANDLE, LOCAL_SPK_DAC_CHANNEL);
 adcplay_data_t spk_adcplay_data = ADCPLAY_STATIC_INIT( 3, LOCAL_SPK_ADC_HANDLE);
 
@@ -76,16 +77,18 @@ void local_spk_stop(void)
 
 bool local_spk_start(void)
 {
-	bool res;
+	bool res = 1;
 
-	if (local_spk_is_started());
+	//dacplay_init(dacplay_data_t * dacplay_data, uint8_t id, DAC_HandleTypeDef * hdac, uint8_t dac_channel);
+	dacplay_init(&spk_dacplay_data, spk_dacplay_data.id,  LOCAL_SPK_DAC_HANDLE, LOCAL_SPK_DAC_CHANNEL);
+	if (local_spk_is_started())return;
     //res =
 	if (res) 
 	{
 		res = dacplay_start_dma(&spk_dacplay_data);
 	}
-
+	//dacplay_start_dma(&spk_dacplay_data);
     //set_tim_frequency2(&htim15, BASE_AUDIO_FREQUENCY, BASE_FREQUENCY);
-    HAL_TIM_Base_Start(&htim15);
+    HAL_TIM_Base_Start_IT(LOCAL_SPK_ADC_TIM_HANDLE);
 	return res;
 }

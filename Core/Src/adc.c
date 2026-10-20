@@ -322,12 +322,12 @@ void MX_ADC5_Init(void)
   hadc5.Init.ScanConvMode = ADC_SCAN_DISABLE;
   hadc5.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc5.Init.LowPowerAutoWait = DISABLE;
-  hadc5.Init.ContinuousConvMode = DISABLE;
+  hadc5.Init.ContinuousConvMode = ENABLE;
   hadc5.Init.NbrOfConversion = 1;
   hadc5.Init.DiscontinuousConvMode = DISABLE;
-  hadc5.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T20_TRGO;
+  hadc5.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T15_TRGO;
   hadc5.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
-  hadc5.Init.DMAContinuousRequests = DISABLE;
+  hadc5.Init.DMAContinuousRequests = ENABLE;
   hadc5.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
   hadc5.Init.OversamplingMode = DISABLE;
   if (HAL_ADC_Init(&hadc5) != HAL_OK)
@@ -604,7 +604,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     hdma_adc5.Init.MemInc = DMA_MINC_ENABLE;
     hdma_adc5.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
     hdma_adc5.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-    hdma_adc5.Init.Mode = DMA_NORMAL;
+    hdma_adc5.Init.Mode = DMA_CIRCULAR;
     hdma_adc5.Init.Priority = DMA_PRIORITY_LOW;
     if (HAL_DMA_Init(&hdma_adc5) != HAL_OK)
     {

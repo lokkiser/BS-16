@@ -291,7 +291,7 @@ void set_line_event(uint8_t num, line_event_e event)
     {
         case NO_EVENT:
         local_spk_stop();
-        local_mic_stop();
+        //local_mic_stop(); //TODO
         //no break
         case EVENT_MISSED_CALL:
         set_line_p_state(num, P_IDLE);

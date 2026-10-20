@@ -14,7 +14,9 @@
 
 static bool local_mic_is_start = false;
 
-
+struct adc_mic_snd local_mic_adc;
+//mic_adc.index = 0;
+//uint16_t [200] = {};
 uint32_t d_BASE_AUDIO_FREQUENCY = 48000;
 uint32_t d_BASE_FREQUENCY = 165888000;
 
